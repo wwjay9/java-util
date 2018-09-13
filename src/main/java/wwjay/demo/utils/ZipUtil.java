@@ -3,8 +3,9 @@ package wwjay.demo.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.nio.file.FileSystem;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.*;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -15,11 +16,6 @@ import java.util.zip.ZipInputStream;
 public class ZipUtil {
 
     private final static Logger logger = LoggerFactory.getLogger(ZipUtil.class);
-
-    /**
-     * 缓存大小
-     */
-    private static final int BUFFER_SIZE = 4096;
 
     /**
      * 验证zip文件是否损坏或有效
@@ -58,104 +54,71 @@ public class ZipUtil {
     }
 
     /**
-     * 将zip文件解压到zip文件的当前目录，目录名为zip的文件名
+     * 将zip包中包含指定扩展名的文件解压到临时目录，并返回临时目录路径
      *
      * @param zipFile zip文件
      */
-    public static void unzip(File zipFile) {
-        String path = zipFile.getPath();
-        Path targetDir = path.contains(".") ?
-                Paths.get(path.substring(0, path.lastIndexOf('.'))) : Paths.get(path);
-        unzip(zipFile, targetDir);
+    public static Path unzipToTemp(File zipFile, String... extension) {
+        Path tempPath;
+        try {
+            tempPath = Files.createTempDirectory(null);
+        } catch (IOException e) {
+            logger.error("创建临时目录失败:", e);
+            return null;
+        }
+        unzip(zipFile, tempPath, extension);
+        return tempPath;
     }
 
     /**
-     * 解压zip文件到指定路径
+     * 将zip包中包含指定扩展名的文件解压到当前目录，目录名为zip的文件名
+     *
+     * @param zipFile zip文件
+     */
+    public static void unzip(File zipFile, String... extension) {
+        String path = zipFile.getPath();
+        Path targetDir = path.contains(".") ?
+                Paths.get(path.substring(0, path.lastIndexOf('.'))) : Paths.get(path);
+        unzip(zipFile, targetDir, extension);
+    }
+
+    /**
+     * 将zip包中包含指定扩展名的文件解压到指定路径
      *
      * @param zipFile    zip文件
      * @param targetPath 解压的目标路径
+     * @param extension  需要解压的文件扩展名，如 .git, .jpg
      */
-    public static void unzip(File zipFile, Path targetPath) {
+    public static void unzip(File zipFile, Path targetPath, String... extension) {
         if (!isValid(zipFile)) {
             return;
         }
 
         try (FileSystem fs = FileSystems.newFileSystem(zipFile.toPath(), null)) {
-            fs.getRootDirectories()
-                    .forEach(root -> {
-                        try {
-                            Files.walk(root).forEach(path -> {
-                                Path zipElementPath = targetPath.resolve(path);
-                                try {
-                                    Files.copy(path, zipElementPath);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+            for (Path root : fs.getRootDirectories()) {
+                Files.walk(root).forEach(path -> {
+                    try {
+                        Path zipElementPath = Paths.get(targetPath.toString(), path.toString());
+                        if (Files.isDirectory(zipElementPath)) {
+                            Files.createDirectories(zipElementPath);
+                        } else {
+                            if (extension != null) {
+                                for (String s : extension) {
+                                    if (!path.toString().endsWith(s)) {
+                                        return;
+                                    }
                                 }
-                            });
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                            }
+                            // 如果目标文件已经存在则覆盖
+                            Files.copy(path, zipElementPath, StandardCopyOption.REPLACE_EXISTING);
                         }
-                    });
+                    } catch (IOException e) {
+                        logger.error("解压文件失败:", e);
+                    }
+                });
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("解压文件失败:", e);
         }
-
-        // try (ZipFile zip = new ZipFile(zipFile)) {
-        //     // 如果解压目录不存在则创建
-        //     Files.createDirectories(targetPath);
-        //     // 遍历所有的zip文件内容
-        //     Enumeration<? extends ZipEntry> entries = zip.entries();
-        //     while (entries.hasMoreElements()) {
-        //         ZipEntry zipEntry = entries.nextElement();
-        //         Path entryPath = Paths.get(zipEntry.getName());
-        //         Path resolve = targetPath.resolve(entryPath);
-        //         if (zipEntry.isDirectory()) {
-        //             System.out.println(zipEntry);
-        //         }
-        //     }
-        // } catch (IOException e) {
-        //     logger.error("解压zip文件失败:", e);
-        //     e.printStackTrace();
-        // }
-
-        // try (ZipInputStream zin = new ZipInputStream(new FileInputStream(zipFile.getPath()))) {
-        //     ZipEntry entry;
-        //     while ((entry = zin.getNextEntry()) != null) {
-        //
-        //     }
-        //     // 遍历zip包中所有文件
-        //     while (entry != null) {
-        //         String filePath = targetPath + File.separator + entry.getName();
-        //         if (!entry.isDirectory()) {
-        //             // 如果是为文件则提取
-        //             extractFile(zin, filePath);
-        //         } else {
-        //             // 如果是文件夹则创建
-        //             File dir = new File(filePath);
-        //             dir.mkdir();
-        //         }
-        //         zin.closeEntry();
-        //         entry = zin.getNextEntry();
-        //     }
-        // } catch (IOException e) {
-        //     logger.error("解压zip文件失败:", e);
-        // }
-    }
-
-    private static void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
-        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
-        byte[] bytesIn = new byte[BUFFER_SIZE];
-        int read;
-        while ((read = zipIn.read(bytesIn)) != -1) {
-            bos.write(bytesIn, 0, read);
-        }
-        bos.close();
-    }
-
-    public static void main(String[] args) throws IOException {
-        ZipUtil.unzip(new File("D:/新建文件夹/DnsJumper.zip"));
-        // Path path = Paths.get("a", "b", "c");
-        // Path d = path.resolveSibling("d");
-
     }
 }
