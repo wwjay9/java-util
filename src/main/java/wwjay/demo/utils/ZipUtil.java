@@ -78,10 +78,7 @@ public class ZipUtil {
      * @param zipFile zip文件
      */
     public static void unzip(File zipFile, String... extension) {
-        String path = zipFile.getPath();
-        Path targetDir = path.contains(".") ?
-                Paths.get(path.substring(0, path.lastIndexOf('.'))) : Paths.get(path);
-        unzip(zipFile, targetDir, extension);
+        unzip(zipFile, Paths.get(StringUtils.stripFilenameExtension(zipFile.getPath())), extension);
     }
 
     /**
