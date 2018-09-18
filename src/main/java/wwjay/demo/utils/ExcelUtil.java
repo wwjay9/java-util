@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * @author wwj
  */
-public class ExcelUtils {
+public class ExcelUtil {
 
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
     public static final int SEARCH_UP = 1;
