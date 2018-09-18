@@ -2,11 +2,13 @@ package wwjay.demo.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
+import java.util.Objects;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
@@ -76,10 +78,7 @@ public class ZipUtil {
      * @param zipFile zip文件
      */
     public static void unzip(File zipFile, String... extension) {
-        String path = zipFile.getPath();
-        Path targetDir = path.contains(".") ?
-                Paths.get(path.substring(0, path.lastIndexOf('.'))) : Paths.get(path);
-        unzip(zipFile, targetDir, extension);
+        unzip(zipFile, Paths.get(StringUtils.stripFilenameExtension(zipFile.getPath())), extension);
     }
 
     /**
@@ -87,7 +86,7 @@ public class ZipUtil {
      *
      * @param zipFile    zip文件
      * @param targetPath 解压的目标路径
-     * @param extension  需要解压的文件扩展名，如 .git, .jpg
+     * @param extension  需要解压的文件扩展名，如 git, jpg
      */
     public static void unzip(File zipFile, Path targetPath, String... extension) {
         if (!isValid(zipFile)) {
@@ -104,7 +103,7 @@ public class ZipUtil {
                         } else {
                             if (extension != null) {
                                 for (String s : extension) {
-                                    if (!path.toString().endsWith(s)) {
+                                    if (Objects.equals(StringUtils.getFilenameExtension(path.toString()), s)) {
                                         return;
                                     }
                                 }
