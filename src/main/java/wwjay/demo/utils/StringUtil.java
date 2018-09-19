@@ -1,6 +1,5 @@
 package wwjay.demo.utils;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -57,7 +56,7 @@ public class StringUtil {
      * @param paths       需要拼接的path，可以传递为"/path"或"path"，拼接的结果会自动去除多余的斜杠
      * @return 拼接的url
      */
-    public static String buildUrl(String httpUrl, @Nullable Map<String, String> queryParams, String... paths) {
+    public static String buildUrl(String httpUrl, Map<String, String> queryParams, String... paths) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(httpUrl);
         if (!ObjectUtils.isEmpty(paths)) {
             for (String path : paths) {
