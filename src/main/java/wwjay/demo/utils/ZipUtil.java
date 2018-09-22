@@ -120,4 +120,23 @@ public class ZipUtil {
             logger.error("解压文件失败:", e);
         }
     }
+
+    /**
+     * 将文件添加到zip包中
+     *
+     * @param zipFile  zip文件
+     * @param fromPath 需要添加的文件路径
+     * @param toPath   添加到的zip包中路径
+     * @return 添加结果
+     */
+    public static boolean appendFile(File zipFile, Path fromPath, Path toPath) {
+        try (FileSystem fs = FileSystems.newFileSystem(zipFile.toPath(), null)) {
+            Path path = fs.getPath(toPath.toString());
+            Files.copy(fromPath, path, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            logger.error("添加文件失败:", e);
+            return false;
+        }
+        return true;
+    }
 }
