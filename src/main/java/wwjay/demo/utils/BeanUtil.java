@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * @author wwjay
+ * @author wwj
  */
 public class BeanUtil {
     /**

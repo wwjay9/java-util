@@ -10,7 +10,7 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * @author wwjay
+ * @author wwj
  */
 public class StringUtil {
 

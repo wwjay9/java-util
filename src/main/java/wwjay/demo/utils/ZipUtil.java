@@ -4,16 +4,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
+import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 /**
- * @author wwjay
+ * @author wwj
  */
 public class ZipUtil {
 
@@ -22,36 +23,30 @@ public class ZipUtil {
     /**
      * 验证zip文件是否损坏或有效
      */
-    public static boolean isValid(final File file) {
-        try (ZipFile zipfile = new ZipFile(file)) {
-            return true;
+    public static void isValid(final Path file) {
+        try (ZipFile zipfile = new ZipFile(file.toFile())) {
         } catch (IOException e) {
-            logger.error("验证ZIP文件失败:", e);
-            return false;
+            throw new IllegalArgumentException("验证ZIP文件失败:", e);
         }
     }
 
     /**
      * 验证zip文件是否损坏或有效
      */
-    public static boolean isValid(final InputStream inputStream) {
+    public static void isValid(final InputStream inputStream) {
         try (ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
-            return true;
         } catch (IOException e) {
-            logger.error("验证ZIP文件失败:", e);
-            return false;
+            throw new IllegalArgumentException("验证ZIP文件失败:", e);
         }
     }
 
     /**
      * 验证zip文件是否损坏或有效
      */
-    public static boolean isValid(final String filePath) {
+    public static void isValid(final String filePath) {
         try (ZipFile zipFile = new ZipFile(filePath)) {
-            return true;
         } catch (IOException e) {
-            logger.error("验证ZIP文件失败:", e);
-            return false;
+            throw new IllegalArgumentException("验证ZIP文件失败:", e);
         }
     }
 
@@ -60,7 +55,7 @@ public class ZipUtil {
      *
      * @param zipFile zip文件
      */
-    public static Path unzipToTemp(File zipFile, String... extension) {
+    public static Path unzipToTemp(final Path zipFile, String... extension) {
         Path tempPath;
         try {
             tempPath = Files.createTempDirectory(null);
@@ -77,35 +72,34 @@ public class ZipUtil {
      *
      * @param zipFile zip文件
      */
-    public static void unzip(File zipFile, String... extension) {
-        unzip(zipFile, Paths.get(StringUtils.stripFilenameExtension(zipFile.getPath())), extension);
+    public static void unzip(final Path zipFile, String... extension) {
+        unzip(zipFile, Paths.get(StringUtils.stripFilenameExtension(zipFile.toString())), extension);
     }
 
     /**
      * 将zip包中包含指定扩展名的文件解压到指定路径
      *
-     * @param zipFile    zip文件
-     * @param targetPath 解压的目标路径
-     * @param extension  需要解压的文件扩展名，如 git, jpg
+     * @param zipFile   zip文件
+     * @param target    解压的目标路径
+     * @param extension 需要解压的文件扩展名，如 git, jpg
      */
-    public static void unzip(File zipFile, Path targetPath, String... extension) {
-        if (!isValid(zipFile)) {
-            return;
-        }
+    public static void unzip(final Path zipFile, final Path target, String... extension) {
+        isValid(zipFile);
 
-        try (FileSystem fs = FileSystems.newFileSystem(zipFile.toPath(), null)) {
+        try (FileSystem fs = FileSystems.newFileSystem(zipFile, null)) {
             for (Path root : fs.getRootDirectories()) {
                 Files.walk(root).forEach(path -> {
                     try {
-                        Path zipElementPath = Paths.get(targetPath.toString(), path.toString());
-                        if (Files.isDirectory(zipElementPath)) {
+                        Path zipElementPath = Paths.get(target.toString(), path.toString());
+                        if (Files.isDirectory(path)) {
                             Files.createDirectories(zipElementPath);
                         } else {
-                            if (extension != null) {
-                                for (String s : extension) {
-                                    if (Objects.equals(StringUtils.getFilenameExtension(path.toString()), s)) {
-                                        return;
-                                    }
+                            if (extension != null && extension.length > 0) {
+                                if (Stream.of(extension)
+                                        .noneMatch(s ->
+                                                Objects.equals(StringUtils.getFilenameExtension(path.toString()), s))) {
+                                    // 跳过不是指定扩展名的文件
+                                    return;
                                 }
                             }
                             // 如果目标文件已经存在则覆盖
@@ -122,17 +116,43 @@ public class ZipUtil {
     }
 
     /**
-     * 将文件添加到zip包中
+     * 将文件或文件夹添加到zip包中
      *
-     * @param zipFile  zip文件
-     * @param fromPath 需要添加的文件路径
-     * @param toPath   添加到的zip包中路径
+     * @param zipFile zip文件
+     * @param source  需要添加的源路径
+     * @param target  添加到zip包中的路径，如果是null则为zip包中的根目录
      * @return 添加结果
      */
-    public static boolean appendFile(File zipFile, Path fromPath, Path toPath) {
-        try (FileSystem fs = FileSystems.newFileSystem(zipFile.toPath(), null)) {
-            Path path = fs.getPath(toPath.toString());
-            Files.copy(fromPath, path, StandardCopyOption.REPLACE_EXISTING);
+    public static boolean append(final Path zipFile, final Path source, final Path target) {
+        isValid(zipFile);
+
+        try (FileSystem fs = FileSystems.newFileSystem(zipFile, null)) {
+            if (!Files.exists(source)) {
+                throw new IllegalArgumentException("源路径不存在");
+            }
+
+            Path path = fs.getPath(target != null ? target.toString() : "/");
+            Files.createDirectories(path);
+
+            if (Files.isDirectory(source)) {
+                Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        Files.createDirectories(path.resolve(source.relativize(dir).toString()));
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Files.copy(file, path.resolve(source.relativize(file).toString()), StandardCopyOption.REPLACE_EXISTING);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            } else if (Files.isRegularFile(source)) {
+                Files.copy(source, path.resolve(source.getFileName().toString()), StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                throw new IllegalArgumentException("源路径必须是文件或者文件夹");
+            }
         } catch (IOException e) {
             logger.error("添加文件失败:", e);
             return false;
