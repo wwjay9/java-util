@@ -1,6 +1,7 @@
 package wwjay.demo.utils;
 
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.security.SecureRandom;
@@ -60,10 +61,7 @@ public class StringUtil {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(httpUrl);
         if (!ObjectUtils.isEmpty(paths)) {
             for (String path : paths) {
-                if (path.endsWith("/")) {
-                    path = path.substring(0, path.length() - 1);
-                }
-                builder.path("/" + path);
+                builder.path("/" + StringUtils.trimTrailingCharacter(path, '/'));
             }
         }
         if (queryParams != null) {
