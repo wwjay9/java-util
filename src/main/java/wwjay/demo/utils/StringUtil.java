@@ -50,6 +50,20 @@ public class StringUtil {
     }
 
     /**
+     * 提取一个字符串的前面部分
+     *
+     * @param str  原始字符串
+     * @param size 提取的字符串大小，如size比str的长度小，则返回str
+     * @return 提取的前面部分字符串
+     */
+    public static String substringBegin(String str, int size) {
+        if (str.length() < size) {
+            return str;
+        }
+        return str.substring(0, size);
+    }
+
+    /**
      * 拼接url的便捷方法，解决常规拼接url时斜杠的问题
      *
      * @param httpUrl     拼接的基础url
