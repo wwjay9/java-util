@@ -22,6 +22,9 @@ public class ExcelUtil {
     public static final int SEARCH_DOWN = 3;
     public static final int SEARCH_LEFT = 4;
 
+    private ExcelUtil() {
+    }
+
     /**
      * 向单元格写数据
      *

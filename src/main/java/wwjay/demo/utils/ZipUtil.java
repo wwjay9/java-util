@@ -19,6 +19,9 @@ import java.util.zip.ZipOutputStream;
  */
 public class ZipUtil {
 
+    private ZipUtil() {
+    }
+
     /**
      * 将多个文件打包成一个zip文件
      *

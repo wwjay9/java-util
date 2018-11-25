@@ -13,6 +13,10 @@ import java.util.stream.Stream;
  * @author wwj
  */
 public class BeanUtil {
+
+    private BeanUtil() {
+    }
+
     /**
      * 将source的List转换为List<target>
      *
