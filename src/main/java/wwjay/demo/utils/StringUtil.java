@@ -22,6 +22,9 @@ public class StringUtil {
     private static final Random RANDOM = new SecureRandom();
     private static final char[] SYMBOLS = ALPHANUM.toCharArray();
 
+    private StringUtil() {
+    }
+
     /**
      * 生成一个12位随机字符串
      */
@@ -61,6 +64,13 @@ public class StringUtil {
             return str;
         }
         return str.substring(0, size);
+    }
+
+    /**
+     * 构建url
+     */
+    public static String buildUrl(String httpUrl, String... paths) {
+        return buildUrl(httpUrl, null, paths);
     }
 
     /**
