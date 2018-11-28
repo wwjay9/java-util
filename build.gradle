@@ -15,6 +15,7 @@ repositories {
 dependencies {
     compile('org.apache.poi:poi-ooxml:+')
     compile('org.springframework:spring-web:+')
+    compile('com.google.zxing:javase:+')
     compile('org.slf4j:slf4j-api:+')
     compile('ch.qos.logback:logback-classic:+')
 }
