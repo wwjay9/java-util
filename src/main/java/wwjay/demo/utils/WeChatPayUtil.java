@@ -118,9 +118,9 @@ public class WeChatPayUtil {
      * @return 返回前端JS调用微信支付的请求参数列表
      */
     public static Map<String, String> jsApiPay(String appId, String key, String mchId, String body, String outTradeNo,
-                                               int totalFee, String spBillCreateIp, String notifyUrl, String productId, String openId) {
+                                               int totalFee, String spBillCreateIp, String notifyUrl, String openId) {
         String bodyXml = generateUnifiedOrderXml(appId, key, mchId, body, outTradeNo,
-                totalFee, spBillCreateIp, notifyUrl, TradeType.JSAPI, productId, openId);
+                totalFee, spBillCreateIp, notifyUrl, TradeType.JSAPI, null, openId);
         String responseXml = REST_TEMPLATE.postForObject(UNIFIED_ORDER_URL, bodyXml, String.class);
         Map<String, String> responseMap = xmlToMap(responseXml);
         if (!(responseMap.containsKey(RETURN_CODE) && responseMap.containsKey(RESULT_CODE) &&
