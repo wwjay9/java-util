@@ -15,6 +15,8 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
+ * zip工具
+ *
  * @author wwj
  */
 public class ZipUtil {

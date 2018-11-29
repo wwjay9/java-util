@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
+ * Bean工具
+ *
  * @author wwj
  */
 public class BeanUtil {

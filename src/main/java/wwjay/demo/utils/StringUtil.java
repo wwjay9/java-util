@@ -11,6 +11,8 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
+ * 字符串工具
+ *
  * @author wwj
  */
 public class StringUtil {

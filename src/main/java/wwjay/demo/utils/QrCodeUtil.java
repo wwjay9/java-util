@@ -22,7 +22,6 @@ import java.util.Map;
  * 二维码生成工具
  *
  * @author wwj
- * @date 2018-11-28
  */
 public class QrCodeUtil {
 
