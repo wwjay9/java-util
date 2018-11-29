@@ -237,7 +237,7 @@ public class WeChatPayUtil {
      * @param key    key
      * @return 验证结果
      */
-    private static boolean verify(Map<String, String> params, String key) {
+    public static boolean verify(Map<String, String> params, String key) {
         String sign = params.get(SIGN);
         if (sign == null) {
             throw new IllegalArgumentException("未包含签名参数");
@@ -285,7 +285,7 @@ public class WeChatPayUtil {
     /**
      * XML格式字符串转换为Map
      */
-    private static Map<String, String> xmlToMap(String xmlString) {
+    public static Map<String, String> xmlToMap(String xmlString) {
         Map<String, String> data = new HashMap<>(16);
         DocumentBuilder documentBuilder = newDocumentBuilder();
 
@@ -305,6 +305,13 @@ public class WeChatPayUtil {
             throw new RuntimeException("解析xml异常", e);
         }
         return data;
+    }
+
+    /**
+     * 微信支付通知时返回的成功信息
+     */
+    public static String successXml() {
+        return "<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>";
     }
 
     /**
