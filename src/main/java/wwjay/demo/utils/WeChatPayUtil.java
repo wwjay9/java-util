@@ -38,6 +38,12 @@ import java.util.*;
 public class WeChatPayUtil {
 
     private static final String UNIFIED_ORDER_URL = "https://api.mch.weixin.qq.com/pay/unifiedorder";
+    private static final RestTemplate REST_TEMPLATE = new RestTemplate();
+
+    static {
+        // 微信接口返回的数据没有指定字符编码
+        REST_TEMPLATE.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+    }
 
     public static final String APP_ID = "appid";
     public static final String MCH_ID = "mch_id";
@@ -114,9 +120,7 @@ public class WeChatPayUtil {
                                                int totalFee, String spBillCreateIp, String notifyUrl, String productId, String openId) {
         String bodyXml = generateUnifiedOrderXml(appId, key, mchId, body, outTradeNo,
                 totalFee, spBillCreateIp, notifyUrl, TradeType.JSAPI, productId, openId);
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        String responseXml = restTemplate.postForObject(UNIFIED_ORDER_URL, bodyXml, String.class);
+        String responseXml = REST_TEMPLATE.postForObject(UNIFIED_ORDER_URL, bodyXml, String.class);
         return xmlToMap(responseXml);
     }
 
