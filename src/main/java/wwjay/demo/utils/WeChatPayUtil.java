@@ -76,6 +76,7 @@ public class WeChatPayUtil {
     public static final String ERR_CODE_DES = "err_code_des";
     public static final String PREPAY_ID = "prepay_id";
     public static final String CODE_URL = "code_url";
+    public static final String SUCCESS = "SUCCESS";
 
     /**
      * 默认的支付方式，禁止使用信用卡
@@ -114,14 +115,32 @@ public class WeChatPayUtil {
     /**
      * 请求jsApi统一下单接口
      *
-     * @return 返回的结果参数
+     * @return 返回前端JS调用微信支付的请求参数列表
      */
     public static Map<String, String> jsApiPay(String appId, String key, String mchId, String body, String outTradeNo,
                                                int totalFee, String spBillCreateIp, String notifyUrl, String productId, String openId) {
         String bodyXml = generateUnifiedOrderXml(appId, key, mchId, body, outTradeNo,
                 totalFee, spBillCreateIp, notifyUrl, TradeType.JSAPI, productId, openId);
         String responseXml = REST_TEMPLATE.postForObject(UNIFIED_ORDER_URL, bodyXml, String.class);
-        return xmlToMap(responseXml);
+        Map<String, String> responseMap = xmlToMap(responseXml);
+        if (!(responseMap.containsKey(RETURN_CODE) && responseMap.containsKey(RESULT_CODE) &&
+                Objects.equals(responseMap.get(RETURN_CODE).toUpperCase(), SUCCESS) &&
+                Objects.equals(responseMap.get(RESULT_CODE).toUpperCase(), SUCCESS))) {
+            throw new IllegalArgumentException("请求微信支付下单接口失败,返回的错误信息:" + responseXml);
+        }
+        if (!verify(responseMap, key)) {
+            throw new IllegalArgumentException("验证微信返回数据失败,返回信息:" + responseXml);
+        }
+        String prepayId = responseMap.get(PREPAY_ID);
+
+        SortedMap<String, String> jsApiPayParams = new TreeMap<>();
+        jsApiPayParams.put("appId", appId);
+        jsApiPayParams.put("timeStamp", (System.currentTimeMillis() / 1000L) + "");
+        jsApiPayParams.put("nonceStr", StringUtil.randomString());
+        jsApiPayParams.put("package", prepayId);
+        jsApiPayParams.put("signType", DEFAULT_SIGN_TYPE);
+        jsApiPayParams.put("paySign", sign(jsApiPayParams, key));
+        return jsApiPayParams;
     }
 
     /**
@@ -209,6 +228,23 @@ public class WeChatPayUtil {
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * 验证微信请求的参数
+     *
+     * @param params 参数列表
+     * @param key    key
+     * @return 验证结果
+     */
+    private static boolean verify(Map<String, String> params, String key) {
+        String sign = params.get(SIGN);
+        if (sign == null) {
+            throw new IllegalArgumentException("未包含签名参数");
+        }
+        SortedMap<String, String> sortedMap = new TreeMap<>(params);
+        sortedMap.remove(SIGN);
+        return Objects.equals(sign(sortedMap, key), sign);
     }
 
     /**
