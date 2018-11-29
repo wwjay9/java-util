@@ -1,6 +1,5 @@
 package wwjay.demo.utils;
 
-import org.apache.commons.codec.binary.Hex;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -197,7 +196,12 @@ public class WeChatPayUtil {
             Mac hmacSHA256 = Mac.getInstance("HmacSHA256");
             SecretKeySpec secretKeySpec = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             hmacSHA256.init(secretKeySpec);
-            return Hex.encodeHexString(hmacSHA256.doFinal(text.getBytes(StandardCharsets.UTF_8)));
+            byte[] bytes = hmacSHA256.doFinal(text.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte item : bytes) {
+                sb.append(Integer.toHexString((item & 0xFF) | 0x100), 1, 3);
+            }
+            return sb.toString();
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException(e);
         }
