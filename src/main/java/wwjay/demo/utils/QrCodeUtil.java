@@ -9,8 +9,11 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.util.StringUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -22,6 +25,7 @@ import java.util.Map;
  * 二维码生成工具
  *
  * @author wwj
+ * @date 2018-11-28
  */
 public class QrCodeUtil {
 
@@ -29,6 +33,14 @@ public class QrCodeUtil {
      * 生成二维码的默认格式
      */
     private static final String DEFAULT_FORMAT = "png";
+    /**
+     * 二维码默认的内边距
+     */
+    private static final int DEFAULT_MARGIN = 0;
+    /**
+     * 二维码默认的容错等级
+     */
+    private static final ErrorCorrectionLevel DEFAULT_ERROR_CORRECTION = ErrorCorrectionLevel.L;
 
     private QrCodeUtil() {
     }
@@ -89,6 +101,41 @@ public class QrCodeUtil {
     }
 
     /**
+     * 生成一个带背景图的二维码
+     *
+     * @param text             二维码文本
+     * @param size             二维码大小
+     * @param resourceFilePath 背景图在CalssPath Resource中的路径
+     * @param x                偏移量
+     * @param y                偏移量
+     * @return BufferedImage
+     */
+    public static BufferedImage generateBufferedImage(String text, int size, String resourceFilePath, int x, int y) {
+        BufferedImage qrCode = generateBufferedImage(text, size);
+        try (InputStream backdropIs = QrCodeUtil.class.getResourceAsStream(resourceFilePath)) {
+            return splice(backdropIs, qrCode, x, y);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("读取背景图失败", e);
+        }
+    }
+
+    /**
+     * 将二维码拼接到背景图上
+     *
+     * @param backdropIs 背景图
+     * @param qrCode     二维码图
+     * @param x          x
+     * @param y          y
+     * @return 拼接后的图
+     */
+    private static BufferedImage splice(InputStream backdropIs, BufferedImage qrCode, int x, int y) throws IOException {
+        BufferedImage backdrop = ImageIO.read(backdropIs);
+        Graphics graphics = backdrop.getGraphics();
+        graphics.drawImage(qrCode, x, y, null);
+        return backdrop;
+    }
+
+    /**
      * 生成BufferedImage格式的二维码
      *
      * @param text   二维码文本
@@ -101,9 +148,9 @@ public class QrCodeUtil {
         // 字符集
         hintMap.put(EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name());
         // 边界的大小，默认为4像素
-        hintMap.put(EncodeHintType.MARGIN, 0);
+        hintMap.put(EncodeHintType.MARGIN, DEFAULT_MARGIN);
         // 容错等级
-        hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
+        hintMap.put(EncodeHintType.ERROR_CORRECTION, DEFAULT_ERROR_CORRECTION);
         try {
             return new QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, width, height, hintMap);
         } catch (WriterException e) {
