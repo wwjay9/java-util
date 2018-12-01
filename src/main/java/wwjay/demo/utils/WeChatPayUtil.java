@@ -37,6 +37,9 @@ import java.util.*;
  */
 public class WeChatPayUtil {
 
+    /**
+     * 微信的统一下单接口地址
+     */
     private static final String UNIFIED_ORDER_URL = "https://api.mch.weixin.qq.com/pay/unifiedorder";
     private static final RestTemplate REST_TEMPLATE = new RestTemplate();
 
@@ -116,22 +119,22 @@ public class WeChatPayUtil {
     /**
      * 请求jsApi统一下单接口
      *
+     * @param appId          微信支付分配的公众账号ID（企业号corpid即为此appId）
+     * @param key            key
+     * @param mchId          微信支付分配的商户号
+     * @param body           商品描述
+     * @param outTradeNo     商户订单号
+     * @param totalFee       订单总金额，单位为分
+     * @param spBillCreateIp 终端IP，APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP
+     * @param notifyUrl      通知地址，异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+     * @param openId         用户标识
      * @return 返回前端JS调用微信支付的请求参数列表
      */
     public static Map<String, String> jsApiPay(String appId, String key, String mchId, String body, String outTradeNo,
                                                int totalFee, String spBillCreateIp, String notifyUrl, String openId) {
         String bodyXml = generateUnifiedOrderXml(appId, key, mchId, body, outTradeNo,
                 totalFee, spBillCreateIp, notifyUrl, TradeType.JSAPI, null, openId);
-        String responseXml = REST_TEMPLATE.postForObject(UNIFIED_ORDER_URL, bodyXml, String.class);
-        Map<String, String> responseMap = xmlToMap(responseXml);
-        if (!(responseMap.containsKey(RETURN_CODE) && responseMap.containsKey(RESULT_CODE) &&
-                Objects.equals(responseMap.get(RETURN_CODE).toUpperCase(), SUCCESS) &&
-                Objects.equals(responseMap.get(RESULT_CODE).toUpperCase(), SUCCESS))) {
-            throw new IllegalArgumentException("请求微信支付下单接口失败,返回的错误信息:" + responseXml);
-        }
-        if (!verify(responseMap, key)) {
-            throw new IllegalArgumentException("验证微信返回数据失败,返回信息:" + responseXml);
-        }
+        Map<String, String> responseMap = unifiedOrderRequest(bodyXml, key);
         String prepayId = responseMap.get(PREPAY_ID);
 
         SortedMap<String, String> jsApiPayParams = new TreeMap<>();
@@ -142,6 +145,28 @@ public class WeChatPayUtil {
         jsApiPayParams.put("signType", DEFAULT_SIGN_TYPE);
         jsApiPayParams.put("paySign", sign(jsApiPayParams, key));
         return jsApiPayParams;
+    }
+
+    /**
+     * 请求Native统一下单接口
+     *
+     * @param appId          微信支付分配的公众账号ID
+     * @param key            key
+     * @param mchId          微信支付分配的商户号
+     * @param body           商品描述
+     * @param outTradeNo     商户订单号
+     * @param totalFee       订单总金额，单位为分
+     * @param spBillCreateIp 终端IP，APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP
+     * @param notifyUrl      通知地址，异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+     * @param productId      商品ID
+     * @return 返回二维码链接
+     */
+    public static String nativePay(String appId, String key, String mchId, String body, String outTradeNo,
+                                   int totalFee, String spBillCreateIp, String notifyUrl, String productId) {
+        String bodyXml = generateUnifiedOrderXml(appId, key, mchId, body, outTradeNo,
+                totalFee, spBillCreateIp, notifyUrl, TradeType.NATIVE, productId, null);
+        Map<String, String> responseMap = unifiedOrderRequest(bodyXml, key);
+        return responseMap.get(CODE_URL);
     }
 
     /**
@@ -199,7 +224,24 @@ public class WeChatPayUtil {
         }
         params.put(SIGN, sign(params, key));
 
-        return mapToXmlString(params, "xml");
+        return mapToXmlString(params);
+    }
+
+    /**
+     * 请求微信的统一下单接口
+     */
+    private static Map<String, String> unifiedOrderRequest(String requestBody, String key) {
+        String responseXml = REST_TEMPLATE.postForObject(UNIFIED_ORDER_URL, requestBody, String.class);
+        Map<String, String> responseMap = xmlToMap(responseXml);
+        if (!(responseMap.containsKey(RETURN_CODE) && responseMap.containsKey(RESULT_CODE) &&
+                Objects.equals(responseMap.get(RETURN_CODE).toUpperCase(), SUCCESS) &&
+                Objects.equals(responseMap.get(RESULT_CODE).toUpperCase(), SUCCESS))) {
+            throw new IllegalArgumentException("请求微信支付下单接口失败,返回的错误信息:" + responseXml);
+        }
+        if (!verify(responseMap, key)) {
+            throw new IllegalArgumentException("验证微信返回数据失败,返回信息:" + responseXml);
+        }
+        return responseMap;
     }
 
     /**
@@ -251,10 +293,10 @@ public class WeChatPayUtil {
     /**
      * map转xml字符串
      */
-    private static String mapToXmlString(Map<String, String> map, String rootName) {
+    private static String mapToXmlString(Map<String, String> map) {
         DocumentBuilder docBuilder = newDocumentBuilder();
         Document doc = docBuilder.newDocument();
-        Element rootElement = doc.createElement(rootName);
+        Element rootElement = doc.createElement("xml");
         map.forEach((k, v) -> {
             Element e = doc.createElement(k);
             e.appendChild(doc.createCDATASection(v));
@@ -287,7 +329,7 @@ public class WeChatPayUtil {
      * XML格式字符串转换为Map
      */
     public static Map<String, String> xmlToMap(String xmlString) {
-        Map<String, String> data = new HashMap<>(16);
+        Map<String, String> data = new HashMap<>(30);
         DocumentBuilder documentBuilder = newDocumentBuilder();
 
         try (InputStream stream = new ByteArrayInputStream(xmlString.getBytes(StandardCharsets.UTF_8))) {
