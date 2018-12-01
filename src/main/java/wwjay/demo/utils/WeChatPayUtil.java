@@ -67,6 +67,7 @@ public class WeChatPayUtil {
     public static final String LIMIT_PAY = "limit_pay";
     public static final String OPEN_ID = "openid";
     public static final String SCENE_INFO = "scene_info";
+    public static final String TRANSACTION_ID = "transaction_id";
 
 
     public static final String RETURN_CODE = "return_code";
@@ -137,7 +138,7 @@ public class WeChatPayUtil {
         jsApiPayParams.put("appId", appId);
         jsApiPayParams.put("timeStamp", (System.currentTimeMillis() / 1000L) + "");
         jsApiPayParams.put("nonceStr", StringUtil.randomString());
-        jsApiPayParams.put("package", prepayId);
+        jsApiPayParams.put("package", "prepay_id=" + prepayId);
         jsApiPayParams.put("signType", DEFAULT_SIGN_TYPE);
         jsApiPayParams.put("paySign", sign(jsApiPayParams, key));
         return jsApiPayParams;
