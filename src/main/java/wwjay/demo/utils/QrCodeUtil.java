@@ -79,7 +79,7 @@ public class QrCodeUtil {
      * @param size 二维码大小
      * @return BufferedImage
      */
-    public static BufferedImage generateBufferedImage(String text, int size) {
+    public static BufferedImage generateQrCodeImage(String text, int size) {
         BitMatrix bitMatrix = generate(text, size, size);
         return MatrixToImageWriter.toBufferedImage(bitMatrix);
     }
@@ -106,33 +106,81 @@ public class QrCodeUtil {
      * @param text             二维码文本
      * @param size             二维码大小
      * @param resourceFilePath 背景图在CalssPath Resource中的路径
-     * @param x                偏移量
-     * @param y                偏移量
+     * @param x                二维码偏移量
+     * @param y                二维码偏移量
      * @return BufferedImage
      */
-    public static BufferedImage generateBufferedImage(String text, int size, String resourceFilePath, int x, int y) {
-        BufferedImage qrCode = generateBufferedImage(text, size);
+    public static BufferedImage generateBackdropQrCode(String text, int size, String resourceFilePath, int x, int y) {
+        BufferedImage qrCode = generateQrCodeImage(text, size);
         try (InputStream backdropIs = QrCodeUtil.class.getResourceAsStream(resourceFilePath)) {
-            return splice(backdropIs, qrCode, x, y);
+            return splice(ImageIO.read(backdropIs), qrCode, x, y);
         } catch (IOException e) {
             throw new IllegalArgumentException("读取背景图失败", e);
         }
     }
 
     /**
-     * 将二维码拼接到背景图上
+     * 拼接图片
      *
-     * @param backdropIs 背景图
-     * @param qrCode     二维码图
-     * @param x          x
-     * @param y          y
+     * @param backdrop 背景图
+     * @param front    前景图
+     * @param x        前景图偏移量
+     * @param y        前景图偏移量
      * @return 拼接后的图
      */
-    private static BufferedImage splice(InputStream backdropIs, BufferedImage qrCode, int x, int y) throws IOException {
-        BufferedImage backdrop = ImageIO.read(backdropIs);
+    public static BufferedImage splice(BufferedImage backdrop, BufferedImage front, int x, int y) {
         Graphics graphics = backdrop.getGraphics();
-        graphics.drawImage(qrCode, x, y, null);
+        graphics.drawImage(front, x, y, null);
         return backdrop;
+    }
+
+    /**
+     * 在背景图上居中写文本
+     *
+     * @param backdrop 背景图
+     * @param text     文本
+     * @param y        垂直偏移量
+     * @return 拼接后的图
+     */
+    public static BufferedImage centerWriteText(BufferedImage backdrop, String text, int y) {
+        Graphics graphics = backdrop.getGraphics();
+        // 设置字体大小
+        Font font = graphics.getFont();
+        graphics.setFont(font.deriveFont(Font.BOLD, 30));
+
+        FontMetrics metrics = graphics.getFontMetrics();
+        int x = (backdrop.getWidth() - metrics.stringWidth(text)) / 2;
+
+        graphics.drawString(text, x, y);
+        return backdrop;
+    }
+
+    /**
+     * 将正方形的头像修剪成圆形,并覆盖到背景图上
+     *
+     * @param backdrop 背景图
+     * @param avatar   头像
+     * @param x        头像的偏移量
+     * @param y        头像的偏移量
+     * @return 拼接后的图
+     */
+    public static BufferedImage avatarOverlay(BufferedImage backdrop, BufferedImage avatar, int x, int y) {
+        return avatarOverlay(backdrop, avatar, x, y, 1.0);
+    }
+
+    /**
+     * 将正方形的头像修剪成圆形,并覆盖到背景图上
+     *
+     * @param backdrop 背景图
+     * @param avatar   头像
+     * @param x        头像的偏移量
+     * @param y        头像的偏移量
+     * @param scale    缩放比例,1.0为原比例
+     * @return 拼接后的图
+     */
+    public static BufferedImage avatarOverlay(BufferedImage backdrop, BufferedImage avatar, int x, int y, double scale) {
+        BufferedImage zoom = zoom(toCircle(avatar), scale);
+        return splice(backdrop, zoom, x, y);
     }
 
     /**
@@ -156,5 +204,63 @@ public class QrCodeUtil {
         } catch (WriterException e) {
             throw new RuntimeException("二维码生成错误", e);
         }
+    }
+
+    /**
+     * 将矩形图片转换成圆形图片
+     */
+    private static BufferedImage toCircle(BufferedImage image) {
+        int diameter = Math.min(image.getWidth(), image.getHeight());
+        BufferedImage mask = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D g2d = mask.createGraphics();
+        applyQualityRenderingHints(g2d);
+        g2d.fillOval(0, 0, diameter - 1, diameter - 1);
+        g2d.dispose();
+
+        BufferedImage masked = new BufferedImage(diameter, diameter, BufferedImage.TYPE_INT_ARGB);
+        g2d = masked.createGraphics();
+        applyQualityRenderingHints(g2d);
+        int x = (diameter - image.getWidth()) / 2;
+        int y = (diameter - image.getHeight()) / 2;
+        g2d.drawImage(image, x, y, null);
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_IN));
+        g2d.drawImage(mask, 0, 0, null);
+        g2d.dispose();
+
+        return masked;
+    }
+
+    /**
+     * 消除锯齿
+     */
+    private static void applyQualityRenderingHints(Graphics2D g2d) {
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
+        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    }
+
+    /**
+     * 保持高宽比来缩放图片
+     *
+     * @param image 图片源
+     * @param scale 缩放比例,1.0为原比例
+     * @return 缩放后的图片
+     */
+    private static BufferedImage zoom(BufferedImage image, double scale) {
+        int newWidth = Double.valueOf(image.getWidth() * scale).intValue();
+        int newHeight = Double.valueOf(image.getHeight() * scale).intValue();
+        BufferedImage after = new BufferedImage(newWidth, newHeight, image.getType());
+        Graphics2D g = after.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.drawImage(image, 0, 0, newWidth, newHeight, 0, 0, image.getWidth(),
+                image.getHeight(), null);
+        g.dispose();
+        return after;
     }
 }
