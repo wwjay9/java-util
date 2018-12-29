@@ -69,6 +69,19 @@ public class StringUtil {
     }
 
     /**
+     * 获取一个不包含扩展名的文件名
+     *
+     * @param filename 文件名
+     * @return 不包含扩展名的文件名
+     */
+    public static String getFilenameWithoutExtension(String filename) {
+        if (filename == null) {
+            return null;
+        }
+        return filename.replaceFirst("[.][^.]+$", "");
+    }
+
+    /**
      * 构建url
      */
     public static String buildUrl(String httpUrl, String... paths) {
