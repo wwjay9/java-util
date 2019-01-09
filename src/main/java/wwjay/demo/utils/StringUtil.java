@@ -1,14 +1,13 @@
 package wwjay.demo.utils;
 
+import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * 字符串工具
@@ -98,5 +97,20 @@ public class StringUtil {
                 .toUri()
                 .normalize()
                 .toString();
+    }
+
+    /**
+     * 创建Basic认证的Authorization请求头
+     *
+     * @param username 用户名
+     * @param password 密码
+     * @return Base64编码后的token
+     */
+    public static String basicAuth(String username, String password) {
+        Assert.notNull(username, "username不能为null");
+        Assert.notNull(password, "password不能为null");
+        String credentialsString = username + ":" + password;
+        byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
+        return "Basic " + new String(encodedBytes, StandardCharsets.UTF_8);
     }
 }
