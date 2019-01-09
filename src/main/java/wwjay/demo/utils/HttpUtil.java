@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
@@ -89,7 +90,7 @@ public class HttpUtil {
      * @param url 请求地址
      * @return 请求成功后返回的数据
      */
-    public static String get(String url) {
+    public static String get(String url) throws RestClientException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .GET()
                 .build();
@@ -104,7 +105,7 @@ public class HttpUtil {
      * @param url      请求地址
      * @return 请求成功后返回的数据
      */
-    public static String get(String username, String password, String url) {
+    public static String get(String username, String password, String url) throws RestClientException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .header(HttpHeaders.AUTHORIZATION, basicAuth(username, password))
                 .GET()
@@ -119,7 +120,7 @@ public class HttpUtil {
      * @param requestJson 请求json
      * @return 请求成功后返回的数据
      */
-    public static String post(String url, String requestJson) {
+    public static String post(String url, String requestJson) throws RestClientException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
                 .POST(HttpRequest.BodyPublishers.ofString(requestJson))
@@ -136,7 +137,7 @@ public class HttpUtil {
      * @param requestJson 请求json
      * @return 请求成功后返回的数据
      */
-    public static String post(String username, String password, String url, String requestJson) {
+    public static String post(String username, String password, String url, String requestJson) throws RestClientException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .header(HttpHeaders.AUTHORIZATION, basicAuth(username, password))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -151,7 +152,7 @@ public class HttpUtil {
      * @param request HTTP请求
      * @return 请求成功返回的结果
      */
-    public static String send(HttpRequest request) {
+    public static String send(HttpRequest request) throws RestClientException {
         return send(request, (statusCode, body) -> HttpStatus.valueOf(statusCode).is2xxSuccessful());
     }
 
@@ -162,20 +163,20 @@ public class HttpUtil {
      * @param successPredicate 判断请求成功的断言
      * @return 请求成功返回的结果
      */
-    public static String send(HttpRequest request, BiPredicate<Integer, String> successPredicate) {
+    public static String send(HttpRequest request, BiPredicate<Integer, String> successPredicate) throws RestClientException {
         HttpResponse<String> response;
         try {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
             logger.error("HTTP请求网络错误:{}", e);
-            throw new IllegalArgumentException("HTTP请求网络错误");
+            throw new RestClientException("HTTP请求网络错误");
         }
         String responseBody = response.body();
         if (successPredicate.test(response.statusCode(), responseBody)) {
             return responseBody;
         }
         logger.error("HTTP请求错误,HTTP响应头:{},返回内容:{}", response.headers(), responseBody);
-        throw new RuntimeException("HTTP请求错误");
+        throw new RestClientException("HTTP请求错误");
     }
 
     /**
