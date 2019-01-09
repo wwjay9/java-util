@@ -1,13 +1,9 @@
 package wwjay.demo.utils;
 
-import org.springframework.util.Assert;
-import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Locale;
+import java.util.Random;
+import java.util.UUID;
 
 /**
  * 字符串工具
@@ -65,52 +61,5 @@ public class StringUtil {
             return str;
         }
         return str.substring(0, size);
-    }
-
-    /**
-     * 构建url
-     */
-    public static String buildUrl(String httpUrl, String... paths) {
-        return buildUrl(httpUrl, null, paths);
-    }
-
-    /**
-     * 拼接url的便捷方法，解决常规拼接url时斜杠的问题
-     *
-     * @param httpUrl     拼接的基础url
-     * @param queryParams 需要拼接的查询参数，可以为null
-     * @param paths       需要拼接的path，可以传递为"/path"或"path"，拼接的结果会自动去除多余的斜杠
-     * @return 拼接的url
-     */
-    public static String buildUrl(String httpUrl, Map<String, String> queryParams, String... paths) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(httpUrl);
-        if (!ObjectUtils.isEmpty(paths)) {
-            for (String path : paths) {
-                builder.path("/" + StringUtils.trimTrailingCharacter(path, '/'));
-            }
-        }
-        if (queryParams != null) {
-            queryParams.forEach(builder::queryParam);
-        }
-        return builder.build()
-                .normalize()
-                .toUri()
-                .normalize()
-                .toString();
-    }
-
-    /**
-     * 创建Basic认证的Authorization请求头
-     *
-     * @param username 用户名
-     * @param password 密码
-     * @return Base64编码后的token
-     */
-    public static String basicAuth(String username, String password) {
-        Assert.notNull(username, "username不能为null");
-        Assert.notNull(password, "password不能为null");
-        String credentialsString = username + ":" + password;
-        byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
-        return "Basic " + new String(encodedBytes, StandardCharsets.UTF_8);
     }
 }
