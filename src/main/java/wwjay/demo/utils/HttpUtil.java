@@ -169,7 +169,7 @@ public class HttpUtil {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
             logger.error("HTTP请求网络错误:{}", e);
-            throw new RestClientException("HTTP请求网络错误");
+            throw new RestClientException("HTTP请求网络错误", e);
         }
         String responseBody = response.body();
         if (successPredicate.test(response.statusCode(), responseBody)) {
