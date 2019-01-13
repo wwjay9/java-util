@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -176,7 +177,11 @@ public class HttpUtil {
             return responseBody;
         }
         logger.error("HTTP请求错误,HTTP响应头:{},返回内容:{}", response.headers(), responseBody);
-        throw new RestClientException("HTTP请求错误");
+        HttpStatus responseHttpStatus = HttpStatus.valueOf(response.statusCode());
+        throw new HttpClientErrorException(responseHttpStatus,
+                responseHttpStatus.toString(),
+                response.body().getBytes(),
+                StandardCharsets.UTF_8);
     }
 
     /**
