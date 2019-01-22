@@ -2,17 +2,15 @@ package wwjay.demo.utils;
 
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
+import java.util.zip.*;
 
 /**
  * zip工具
@@ -255,6 +253,25 @@ public class ZipUtil {
         try (ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
         } catch (IOException e) {
             throw new IllegalArgumentException("验证ZIP文件失败:", e);
+        }
+    }
+
+    /**
+     * 解压gzip格式数据
+     */
+    public static String gunzip(byte[] bytes) {
+        if (bytes.length <= 0) {
+            return null;
+        }
+        try {
+            return new BufferedReader(
+                    new InputStreamReader(
+                            new GZIPInputStream(
+                                    new ByteArrayInputStream(bytes)), StandardCharsets.UTF_8))
+                    .lines()
+                    .collect(Collectors.joining());
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
         }
     }
 
