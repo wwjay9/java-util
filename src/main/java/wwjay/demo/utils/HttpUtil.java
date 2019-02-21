@@ -13,7 +13,10 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -23,6 +26,8 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 /**
  * HTTP工具类
@@ -165,23 +170,22 @@ public class HttpUtil {
      * @return 请求成功返回的结果
      */
     public static String send(HttpRequest request, BiPredicate<Integer, String> successPredicate) throws RestClientException {
-        HttpResponse<String> response;
+        HttpResponse<byte[]> response;
         try {
-            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofByteArray());
         } catch (IOException | InterruptedException e) {
             logger.error("HTTP请求网络错误:{}", e);
             throw new RestClientException("HTTP请求网络错误", e);
         }
-        String responseBody = response.body();
+        byte[] body = response.body();
+        String responseBody = isGzip(body) ? gunzip(body) : new String(body, StandardCharsets.UTF_8);
         if (successPredicate.test(response.statusCode(), responseBody)) {
             return responseBody;
         }
         logger.error("HTTP请求错误,HTTP响应头:{},返回内容:{}", response.headers(), responseBody);
         HttpStatus responseHttpStatus = HttpStatus.valueOf(response.statusCode());
-        throw new HttpClientErrorException(responseHttpStatus,
-                responseHttpStatus.toString(),
-                response.body().getBytes(),
-                StandardCharsets.UTF_8);
+        throw new HttpClientErrorException(responseHttpStatus, responseHttpStatus.toString(),
+                body, StandardCharsets.UTF_8);
     }
 
     /**
@@ -194,5 +198,36 @@ public class HttpUtil {
         HTTP_CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
                 .thenAccept(completedAction);
+    }
+
+    /**
+     * 是否压缩
+     */
+    public static boolean isGzip(byte[] bytes) {
+        if ((bytes == null) || (bytes.length < 2)) {
+            return false;
+        } else {
+            return ((bytes[0] == (byte) (GZIPInputStream.GZIP_MAGIC))
+                    && (bytes[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8)));
+        }
+    }
+
+    /**
+     * 解压gzip
+     */
+    public static String gunzip(byte[] bytes) {
+        if (bytes.length <= 0) {
+            return null;
+        }
+        try {
+            return new BufferedReader(
+                    new InputStreamReader(
+                            new GZIPInputStream(
+                                    new ByteArrayInputStream(bytes)), StandardCharsets.UTF_8))
+                    .lines()
+                    .collect(Collectors.joining());
+        } catch (IOException e) {
+            throw new RestClientException("GZip解压失败", e);
+        }
     }
 }
