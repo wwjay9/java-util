@@ -182,10 +182,12 @@ public class HttpUtil {
         if (successPredicate.test(response.statusCode(), responseBody)) {
             return responseBody;
         }
-        logger.error("HTTP请求错误,HTTP响应头:{},返回内容:{}", response.headers(), responseBody);
         HttpStatus responseHttpStatus = HttpStatus.valueOf(response.statusCode());
-        throw new HttpClientErrorException(responseHttpStatus, responseHttpStatus.toString(),
-                body, StandardCharsets.UTF_8);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        response.headers().map().forEach(httpHeaders::addAll);
+
+        throw HttpClientErrorException.create(responseHttpStatus, responseHttpStatus.name(),
+                httpHeaders, body, StandardCharsets.UTF_8);
     }
 
     /**
