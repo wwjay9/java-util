@@ -82,12 +82,25 @@ public class HttpUtil {
      * @param password 密码
      * @return Base64编码后的token
      */
-    public static String basicAuth(String username, String password) {
+    public static String basicEncoder(String username, String password) {
         Assert.notNull(username, "username不能为null");
         Assert.notNull(password, "password不能为null");
         String credentialsString = username + ":" + password;
         byte[] encodedBytes = Base64.getEncoder().encode(credentialsString.getBytes(StandardCharsets.UTF_8));
         return "Basic " + new String(encodedBytes, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 将BasicAuth的请求头解码
+     *
+     * @param encoderStr 包含basic的请求头
+     * @return [username, password]
+     */
+    public static String[] basicDecoder(String encoderStr) {
+        Assert.isTrue(StringUtils.startsWithIgnoreCase(encoderStr, "Basic "), "BasicAuth格式不正确");
+        String base64Credentials = encoderStr.substring("Basic".length()).trim();
+        String credentials = new String(Base64.getDecoder().decode(base64Credentials), StandardCharsets.UTF_8);
+        return credentials.split(":", 2);
     }
 
     /**
@@ -113,7 +126,7 @@ public class HttpUtil {
      */
     public static String get(String username, String password, String url) throws RestClientException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                .header(HttpHeaders.AUTHORIZATION, basicAuth(username, password))
+                .header(HttpHeaders.AUTHORIZATION, basicEncoder(username, password))
                 .GET()
                 .build();
         return send(request);
@@ -145,7 +158,7 @@ public class HttpUtil {
      */
     public static String post(String username, String password, String url, String requestJson) throws RestClientException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                .header(HttpHeaders.AUTHORIZATION, basicAuth(username, password))
+                .header(HttpHeaders.AUTHORIZATION, basicEncoder(username, password))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
                 .POST(HttpRequest.BodyPublishers.ofString(requestJson))
                 .build();
