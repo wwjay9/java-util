@@ -13,10 +13,10 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -26,7 +26,6 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -187,7 +186,7 @@ public class HttpUtil {
         try {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofByteArray());
         } catch (IOException | InterruptedException e) {
-            logger.error("HTTP请求网络错误:{}", e);
+            logger.error("HTTP请求网络错误", e);
             throw new RestClientException("HTTP请求网络错误", e);
         }
         byte[] body = response.body();
@@ -234,13 +233,10 @@ public class HttpUtil {
         if (bytes.length <= 0) {
             return null;
         }
-        try {
-            return new BufferedReader(
-                    new InputStreamReader(
-                            new GZIPInputStream(
-                                    new ByteArrayInputStream(bytes)), StandardCharsets.UTF_8))
-                    .lines()
-                    .collect(Collectors.joining());
+        try (InputStream is = new GZIPInputStream(new ByteArrayInputStream(bytes));
+             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            is.transferTo(os);
+            return new String(os.toByteArray(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RestClientException("GZip解压失败", e);
         }
