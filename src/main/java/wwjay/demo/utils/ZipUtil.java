@@ -1,14 +1,16 @@
 package wwjay.demo.utils;
 
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClientException;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.*;
 
@@ -263,15 +265,12 @@ public class ZipUtil {
         if (bytes.length <= 0) {
             return null;
         }
-        try {
-            return new BufferedReader(
-                    new InputStreamReader(
-                            new GZIPInputStream(
-                                    new ByteArrayInputStream(bytes)), StandardCharsets.UTF_8))
-                    .lines()
-                    .collect(Collectors.joining());
+        try (InputStream is = new GZIPInputStream(new ByteArrayInputStream(bytes));
+             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            is.transferTo(os);
+            return new String(os.toByteArray(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new IllegalArgumentException(e);
+            throw new RestClientException("GZip解压失败", e);
         }
     }
 
