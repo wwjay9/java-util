@@ -13,9 +13,10 @@ repositories {
 }
 
 dependencies {
-    compile('org.apache.poi:poi-ooxml:4.1.0')
-    compile('org.springframework:spring-web:5.1.5.RELEASE')
-    compile('com.google.zxing:javase:3.3.3')
-    compile('org.slf4j:slf4j-api:1.7.26')
-    compile('ch.qos.logback:logback-classic:1.2.3')
+    implementation 'org.apache.poi:poi-ooxml:4.1.0'
+    implementation 'org.springframework:spring-web:5.1.5.RELEASE'
+    implementation 'org.springframework.security:spring-security-core:5.1.5.RELEASE'
+    implementation 'com.google.zxing:javase:3.3.3'
+    implementation 'org.slf4j:slf4j-api:1.7.26'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
 }
