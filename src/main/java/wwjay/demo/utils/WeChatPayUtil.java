@@ -4,11 +4,10 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.security.crypto.codec.Hex;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import org.springframework.util.xml.DomUtils;
 import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.crypto.Mac;
@@ -266,7 +265,7 @@ public class WeChatPayUtil {
             byte[] bytes = hmacSHA256.doFinal(text.getBytes(StandardCharsets.UTF_8));
             return new String(Hex.encode(bytes));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -279,9 +278,7 @@ public class WeChatPayUtil {
      */
     public static boolean verify(Map<String, String> params, String key) {
         String sign = params.get(SIGN);
-        if (sign == null) {
-            throw new IllegalArgumentException("未包含签名参数");
-        }
+        Assert.notNull(sign, "未包含签名参数");
         SortedMap<String, String> sortedMap = new TreeMap<>(params);
         sortedMap.remove(SIGN);
         return Objects.equals(sign(sortedMap, key), sign);
@@ -318,7 +315,7 @@ public class WeChatPayUtil {
             transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
             return stringWriter.toString();
         } catch (TransformerException e) {
-            throw new RuntimeException("转换xml错误,", e);
+            throw new IllegalArgumentException("转换xml错误,", e);
         }
     }
 
@@ -326,25 +323,22 @@ public class WeChatPayUtil {
      * XML格式字符串转换为Map
      */
     public static Map<String, String> xmlToMap(String xmlString) {
-        Map<String, String> data = new HashMap<>(30);
         DocumentBuilder documentBuilder = newDocumentBuilder();
-
         try (InputStream stream = new ByteArrayInputStream(xmlString.getBytes(StandardCharsets.UTF_8))) {
             Document doc = documentBuilder.parse(stream);
-            doc.getDocumentElement().normalize();
+            Element rootElement = doc.getDocumentElement();
+            rootElement.normalize();
 
-            NodeList nodeList = doc.getDocumentElement().getChildNodes();
-            for (int i = 0; i < nodeList.getLength(); i++) {
-                Node node = nodeList.item(i);
-                if (node.getNodeType() == Node.ELEMENT_NODE) {
-                    Element element = (Element) node;
-                    data.put(element.getNodeName(), element.getTextContent());
-                }
+            List<Element> childElements = DomUtils.getChildElements(rootElement);
+            Map<String, String> data = new HashMap<>(childElements.size());
+
+            for (Element element : childElements) {
+                data.put(element.getTagName(), DomUtils.getTextValue(element));
             }
+            return data;
         } catch (IOException | SAXException e) {
-            throw new RuntimeException("解析xml异常", e);
+            throw new IllegalArgumentException("解析xml异常", e);
         }
-        return data;
     }
 
     /**
@@ -361,7 +355,7 @@ public class WeChatPayUtil {
         try {
             return DocumentBuilderFactory.newInstance().newDocumentBuilder();
         } catch (ParserConfigurationException e) {
-            throw new RuntimeException("创建xml文档构建器异常", e);
+            throw new IllegalArgumentException("创建xml文档构建器异常", e);
         }
     }
 }
