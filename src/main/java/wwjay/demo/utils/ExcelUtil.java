@@ -45,8 +45,7 @@ public class ExcelUtil {
 
         // 设置合适的单元格格式
         if (value instanceof Number) {
-            cell.setCellValue(new Double(value.toString()));
-            cell.setCellType(CellType.NUMERIC);
+            cell.setCellValue(Double.valueOf(value.toString()));
         } else {
             cell.setCellValue(value.toString());
         }
@@ -75,6 +74,7 @@ public class ExcelUtil {
             sourceRow = sheet.createRow(insertNumber);
         }
         // 从插入行开始到最后一行向下移动
+        // TODO poi4.x版本中shiftRows方法存在bug，https://bz.apache.org/bugzilla/show_bug.cgi?id=57423
         sheet.shiftRows(startRow, sheet.getLastRowNum(), insertNumber, true, false);
 
         // 填充移动后留下的空行
@@ -106,7 +106,7 @@ public class ExcelUtil {
                 for (int y = 0; y <= row.getLastCellNum(); y++) {
                     Cell cell = row.getCell(y);
                     if (cell != null) {
-                        cell.setCellType(CellType.BLANK);
+                        cell.setBlank();
                     }
                 }
             }
@@ -132,7 +132,7 @@ public class ExcelUtil {
                 for (int y = firstCol; y <= lastCol; y++) {
                     Cell cell = row.getCell(y);
                     if (cell != null) {
-                        cell.setCellType(CellType.BLANK);
+                        cell.setBlank();
                     }
                 }
             }
@@ -268,7 +268,6 @@ public class ExcelUtil {
     public static void insertSumFormula(Sheet sheet, int formulaRow, int formulaCol, int sumStartRow, int sumEndRow) {
         // 修改公式
         Cell sumCell = sheet.getRow(formulaRow).getCell(formulaCol);
-        sumCell.setCellType(CellType.FORMULA);
         String startAddress = sheet.getRow(sumStartRow).getCell(formulaCol).getAddress().toString();
         String endAddress = sheet.getRow(sumEndRow).getCell(formulaCol).getAddress().toString();
         String cellFormula = "SUM(" + startAddress + ":" + endAddress + ")";
