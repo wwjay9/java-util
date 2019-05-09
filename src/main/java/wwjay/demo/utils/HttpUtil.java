@@ -24,6 +24,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
@@ -142,6 +143,23 @@ public class HttpUtil {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
                 .POST(HttpRequest.BodyPublishers.ofString(requestJson))
+                .build();
+        return send(request);
+    }
+
+    /**
+     * 发送一个Form-Data的POST请求
+     *
+     * @param url      请求地址
+     * @param formData 请求formData数据
+     * @return 请求成功后返回的数据
+     */
+    public static String post(String url, Map<String, String> formData) throws RestClientException {
+        StringJoiner body = new StringJoiner("&");
+        formData.forEach((k, v) -> body.add(k + "=" + v));
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
                 .build();
         return send(request);
     }
