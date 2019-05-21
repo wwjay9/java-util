@@ -329,12 +329,9 @@ public class WeChatPayUtil {
             Element rootElement = doc.getDocumentElement();
             rootElement.normalize();
 
-            List<Element> childElements = DomUtils.getChildElements(rootElement);
-            Map<String, String> data = new HashMap<>(childElements.size());
-
-            for (Element element : childElements) {
-                data.put(element.getTagName(), DomUtils.getTextValue(element));
-            }
+            Map<String, String> data = new LinkedHashMap<>();
+            DomUtils.getChildElements(rootElement)
+                    .forEach(element -> data.put(element.getTagName(), DomUtils.getTextValue(element)));
             return data;
         } catch (IOException | SAXException e) {
             throw new IllegalArgumentException("解析xml异常", e);
