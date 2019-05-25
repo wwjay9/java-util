@@ -18,6 +18,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -156,7 +157,8 @@ public class HttpUtil {
      */
     public static String post(String url, Map<String, String> formData) throws RestClientException {
         StringJoiner body = new StringJoiner("&");
-        formData.forEach((k, v) -> body.add(k + "=" + v));
+        formData.forEach((k, v) -> body.add(URLEncoder.encode(k, StandardCharsets.UTF_8) + "=" +
+                URLEncoder.encode(v, StandardCharsets.UTF_8)));
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
