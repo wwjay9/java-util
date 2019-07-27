@@ -10,6 +10,7 @@ import java.util.UUID;
  *
  * @author wwj
  */
+@SuppressWarnings({"WeakerAccess", "unused", "SpellCheckingInspection"})
 public class StringUtil {
 
     private static final String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

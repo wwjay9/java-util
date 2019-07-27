@@ -12,6 +12,7 @@ import java.util.Date;
  * @author wwj
  * @date 2019-03-16
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class DateTimeUtil {
 
     private DateTimeUtil() {

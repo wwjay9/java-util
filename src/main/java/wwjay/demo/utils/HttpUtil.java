@@ -36,6 +36,8 @@ import java.util.zip.GZIPInputStream;
  * @author wwj
  * @date 2019-01-09
  */
+
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class HttpUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(HttpUtil.class);
@@ -238,7 +240,8 @@ public class HttpUtil {
      * 是否压缩
      */
     public static boolean isGzip(byte[] bytes) {
-        if ((bytes == null) || (bytes.length < 2)) {
+        int minLength = 2;
+        if ((bytes == null) || (bytes.length < minLength)) {
             return false;
         } else {
             return ((bytes[0] == (byte) (GZIPInputStream.GZIP_MAGIC))
@@ -249,6 +252,7 @@ public class HttpUtil {
     /**
      * 解压gzip
      */
+    @SuppressWarnings("DuplicatedCode")
     public static String gunzip(byte[] bytes) {
         if (bytes.length <= 0) {
             return null;

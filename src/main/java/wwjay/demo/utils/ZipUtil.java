@@ -19,6 +19,7 @@ import java.util.zip.*;
  *
  * @author wwj
  */
+@SuppressWarnings({"unused", "WeakerAccess", "EmptyTryBlock"})
 public class ZipUtil {
 
     private ZipUtil() {
@@ -117,7 +118,7 @@ public class ZipUtil {
             Files.createDirectories(path);
 
             if (Files.isDirectory(source)) {
-                Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                Files.walkFileTree(source, new SimpleFileVisitor<>() {
                     @Override
                     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                         Files.createDirectories(path.resolve(source.relativize(dir).toString()));
@@ -261,6 +262,7 @@ public class ZipUtil {
     /**
      * 解压gzip格式数据
      */
+    @SuppressWarnings("DuplicatedCode")
     public static String gunzip(byte[] bytes) {
         if (bytes.length <= 0) {
             return null;

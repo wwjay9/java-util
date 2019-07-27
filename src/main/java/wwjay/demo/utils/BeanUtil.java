@@ -14,6 +14,7 @@ import java.util.stream.Stream;
  *
  * @author wwj
  */
+@SuppressWarnings("unused")
 public class BeanUtil {
 
     private BeanUtil() {
@@ -34,11 +35,11 @@ public class BeanUtil {
         List<B> targetList = new ArrayList<>(source.size());
         try {
             for (Object o : source) {
-                B b = target.newInstance();
+                B b = target.getDeclaredConstructor().newInstance();
                 BeanUtils.copyProperties(o, b);
                 targetList.add(b);
             }
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (ReflectiveOperationException e) {
             throw new RuntimeException("复制List的Bean属性时出错", e);
         }
         return targetList;

@@ -16,6 +16,7 @@ import java.util.Optional;
  *
  * @author wwj
  */
+@SuppressWarnings({"unused", "WeakerAccess", "SpellCheckingInspection"})
 public class ExcelUtil {
 
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
@@ -38,14 +39,17 @@ public class ExcelUtil {
      */
     public static void writeCellValue(Sheet sheet, Object value, int row, int col, int spanRow) {
         // 只有value不为null，并且是合并单元格的左上角单元格时才写入数据
-        if (value == null || (getMergedCell(sheet, row, col) != null && !testMergedFirstCell(sheet, row, col))) {
+        if (value == null) {
+            return;
+        }
+        if (getMergedCell(sheet, row, col) != null && !testMergedFirstCell(sheet, row, col)) {
             return;
         }
         Cell cell = sheet.getRow(row).getCell(col);
 
         // 设置合适的单元格格式
         if (value instanceof Number) {
-            cell.setCellValue(Double.valueOf(value.toString()));
+            cell.setCellValue(Double.parseDouble(value.toString()));
         } else {
             cell.setCellValue(value.toString());
         }

@@ -35,6 +35,7 @@ import java.util.*;
  *
  * @author wwj
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class WeChatPayUtil {
 
     /**
@@ -97,6 +98,7 @@ public class WeChatPayUtil {
     /**
      * 交易类型枚举类
      */
+    @SuppressWarnings("SpellCheckingInspection")
     public enum TradeType {
         /**
          * JSAPI支付（或小程序支付）
