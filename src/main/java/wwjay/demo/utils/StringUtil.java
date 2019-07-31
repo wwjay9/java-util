@@ -46,7 +46,7 @@ public class StringUtil {
     /**
      * 生成一个没有-分隔符的uuid字符串
      */
-    public static String randomUUID() {
+    public static String uuid() {
         return UUID.randomUUID().toString().replace("-", "");
     }
 
