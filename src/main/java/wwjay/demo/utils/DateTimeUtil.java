@@ -10,7 +10,6 @@ import java.util.Date;
  * 时间相关转换工具
  *
  * @author wwj
- * @date 2019-03-16
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class DateTimeUtil {

@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -17,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.CookieManager;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -34,7 +36,6 @@ import java.util.zip.GZIPInputStream;
  * HTTP工具类
  *
  * @author wwj
- * @date 2019-01-09
  */
 
 @SuppressWarnings({"unused", "WeakerAccess"})
@@ -44,6 +45,13 @@ public class HttpUtil {
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     private HttpUtil() {
+    }
+
+    /**
+     * 新建一个带Cookie管理器的HttpClient
+     */
+    public static HttpClient newCookieHttpClient() {
+        return HttpClient.newBuilder().cookieHandler(new CookieManager()).build();
     }
 
     /**
@@ -99,11 +107,29 @@ public class HttpUtil {
      * @param encoderStr 包含basic的请求头
      * @return [username, password]
      */
-    public static String[] basicDecoder(String encoderStr) {
+    public static UsernamePasswordAuthenticationToken basicDecoder(String encoderStr) {
         Assert.isTrue(StringUtils.startsWithIgnoreCase(encoderStr, "Basic "), "BasicAuth格式不正确");
         String base64Credentials = encoderStr.substring("Basic".length()).trim();
         String credentials = new String(Base64.getDecoder().decode(base64Credentials), StandardCharsets.UTF_8);
-        return credentials.split(":", 2);
+        String[] split = credentials.split(":", 2);
+        return new UsernamePasswordAuthenticationToken(split[0], split[1]);
+    }
+
+    /**
+     * 构建一个form-urlencoded的post请求
+     *
+     * @param url      请求地址
+     * @param formData 表单数据
+     * @return HttpRequest
+     */
+    public static HttpRequest formUrlencodedRequest(String url, Map<String, String> formData) {
+        StringJoiner body = new StringJoiner("&");
+        formData.forEach((k, v) -> body.add(URLEncoder.encode(k, StandardCharsets.UTF_8) + "=" +
+                URLEncoder.encode(v, StandardCharsets.UTF_8)));
+        return HttpRequest.newBuilder(URI.create(url))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                .build();
     }
 
     /**
@@ -158,14 +184,7 @@ public class HttpUtil {
      * @return 请求成功后返回的数据
      */
     public static String post(String url, Map<String, String> formData) throws RestClientException {
-        StringJoiner body = new StringJoiner("&");
-        formData.forEach((k, v) -> body.add(URLEncoder.encode(k, StandardCharsets.UTF_8) + "=" +
-                URLEncoder.encode(v, StandardCharsets.UTF_8)));
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
-                .build();
-        return send(request);
+        return send(formUrlencodedRequest(url, formData));
     }
 
     /**
