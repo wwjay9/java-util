@@ -1,9 +1,15 @@
-# Created by .ignore support plugin (hsz.mobi)
 ### Java template
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+.gradle
+build/
 .idea
 *.iml
-/out
-/build
-/gradle
-/.gradle
+out/
 target/
+
+### JS template
+.idea/
+dist/
+node_modules/
