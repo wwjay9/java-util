@@ -19,11 +19,11 @@ import java.util.Optional;
 @SuppressWarnings({"unused", "WeakerAccess", "SpellCheckingInspection"})
 public class ExcelUtil {
 
-    private static final DataFormatter DATA_FORMATTER = new DataFormatter();
     public static final int SEARCH_UP = 1;
     public static final int SEARCH_RIGHT = 2;
     public static final int SEARCH_DOWN = 3;
     public static final int SEARCH_LEFT = 4;
+    private static final DataFormatter DATA_FORMATTER = new DataFormatter();
 
     private ExcelUtil() {
     }

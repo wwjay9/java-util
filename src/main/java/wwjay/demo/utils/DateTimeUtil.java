@@ -14,12 +14,11 @@ import java.util.Date;
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class DateTimeUtil {
 
+    public static final String DATA_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(DATA_PATTERN);
+
     private DateTimeUtil() {
     }
-
-    public static final String DATA_PATTERN = "yyyy-MM-dd HH:mm:ss";
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(DATA_PATTERN);
 
     /**
      * yyyy-MM-dd HH:mm:ss格式的字符串转LocalDateTime

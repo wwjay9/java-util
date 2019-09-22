@@ -39,17 +39,6 @@ import java.util.*;
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class WeChatPayUtil {
 
-    /**
-     * 微信的统一下单接口地址
-     */
-    private static final String UNIFIED_ORDER_URL = "https://api.mch.weixin.qq.com/pay/unifiedorder";
-    private static final RestTemplate REST_TEMPLATE = new RestTemplate();
-
-    static {
-        // 微信接口返回的数据没有指定字符编码
-        REST_TEMPLATE.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-    }
-
     public static final String APP_ID = "appid";
     public static final String MCH_ID = "mch_id";
     public static final String DEVICE_INFO = "device_info";
@@ -73,8 +62,6 @@ public class WeChatPayUtil {
     public static final String OPEN_ID = "openid";
     public static final String SCENE_INFO = "scene_info";
     public static final String TRANSACTION_ID = "transaction_id";
-
-
     public static final String RETURN_CODE = "return_code";
     public static final String RETURN_MSG = "return_msg";
     public static final String RESULT_CODE = "result_code";
@@ -83,7 +70,11 @@ public class WeChatPayUtil {
     public static final String PREPAY_ID = "prepay_id";
     public static final String CODE_URL = "code_url";
     public static final String SUCCESS = "SUCCESS";
-
+    /**
+     * 微信的统一下单接口地址
+     */
+    private static final String UNIFIED_ORDER_URL = "https://api.mch.weixin.qq.com/pay/unifiedorder";
+    private static final RestTemplate REST_TEMPLATE = new RestTemplate();
     /**
      * 默认的支付方式，禁止使用信用卡
      */
@@ -93,30 +84,12 @@ public class WeChatPayUtil {
      */
     private static final String DEFAULT_SIGN_TYPE = "HMAC-SHA256";
 
-    private WeChatPayUtil() {
+    static {
+        // 微信接口返回的数据没有指定字符编码
+        REST_TEMPLATE.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
     }
 
-    /**
-     * 交易类型枚举类
-     */
-    @SuppressWarnings("SpellCheckingInspection")
-    public enum TradeType {
-        /**
-         * JSAPI支付（或小程序支付）
-         */
-        JSAPI,
-        /**
-         * Native支付
-         */
-        NATIVE,
-        /**
-         * app支付
-         */
-        APP,
-        /**
-         * H5支付
-         */
-        MWEB
+    private WeChatPayUtil() {
     }
 
     /**
@@ -357,5 +330,28 @@ public class WeChatPayUtil {
         } catch (ParserConfigurationException e) {
             throw new IllegalArgumentException("创建xml文档构建器异常", e);
         }
+    }
+
+    /**
+     * 交易类型枚举类
+     */
+    @SuppressWarnings("SpellCheckingInspection")
+    public enum TradeType {
+        /**
+         * JSAPI支付（或小程序支付）
+         */
+        JSAPI,
+        /**
+         * Native支付
+         */
+        NATIVE,
+        /**
+         * app支付
+         */
+        APP,
+        /**
+         * H5支付
+         */
+        MWEB
     }
 }
