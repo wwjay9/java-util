@@ -28,6 +28,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -141,7 +142,7 @@ public class WeChatPayUtil {
 
         SortedMap<String, String> jsApiPayParams = new TreeMap<>();
         jsApiPayParams.put("appId", appId);
-        jsApiPayParams.put("timeStamp", (System.currentTimeMillis() / 1000L) + "");
+        jsApiPayParams.put("timeStamp", Instant.now().getEpochSecond() + "");
         jsApiPayParams.put("nonceStr", StringUtil.randomString());
         jsApiPayParams.put("package", "prepay_id=" + prepayId);
         jsApiPayParams.put("signType", DEFAULT_SIGN_TYPE);
