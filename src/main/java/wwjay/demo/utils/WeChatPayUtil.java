@@ -12,6 +12,8 @@ import org.xml.sax.SAXException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -27,6 +29,7 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.*;
@@ -36,7 +39,7 @@ import java.util.*;
  *
  * @author wwj
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings({"unused", "WeakerAccess", "AlibabaLowerCamelCaseVariableNaming"})
 public class WeChatPayUtil {
 
     public static final String APP_ID = "appid";
@@ -146,6 +149,47 @@ public class WeChatPayUtil {
     }
 
     /**
+     * XML格式字符串转换为Map
+     */
+    public static Map<String, String> xmlToMap(String xmlString) {
+        DocumentBuilder documentBuilder = newDocumentBuilder();
+        try (InputStream stream = new ByteArrayInputStream(xmlString.getBytes(StandardCharsets.UTF_8))) {
+            Document doc = documentBuilder.parse(stream);
+            Element rootElement = doc.getDocumentElement();
+            rootElement.normalize();
+
+            Map<String, String> data = new LinkedHashMap<>();
+            DomUtils.getChildElements(rootElement)
+                    .forEach(element -> data.put(element.getTagName(), DomUtils.getTextValue(element)));
+            return data;
+        } catch (IOException | SAXException e) {
+            throw new IllegalArgumentException("解析xml异常", e);
+        }
+    }
+
+    /**
+     * 验证微信请求的参数
+     *
+     * @param params 参数列表
+     * @param key    key
+     * @return 验证结果
+     */
+    public static boolean verify(Map<String, String> params, String key) {
+        String sign = params.get(SIGN);
+        Assert.notNull(sign, "未包含签名参数");
+        SortedMap<String, String> sortedMap = new TreeMap<>(params);
+        sortedMap.remove(SIGN);
+        return Objects.equals(sign(sortedMap, key), sign);
+    }
+
+    /**
+     * 微信支付通知时返回的成功信息
+     */
+    public static String successXml() {
+        return "<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>";
+    }
+
+    /**
      * 生成统一订单接口的请求xml
      *
      * @param appId          微信支付分配的公众账号ID（企业号corpid即为此appId）
@@ -246,21 +290,6 @@ public class WeChatPayUtil {
     }
 
     /**
-     * 验证微信请求的参数
-     *
-     * @param params 参数列表
-     * @param key    key
-     * @return 验证结果
-     */
-    public static boolean verify(Map<String, String> params, String key) {
-        String sign = params.get(SIGN);
-        Assert.notNull(sign, "未包含签名参数");
-        SortedMap<String, String> sortedMap = new TreeMap<>(params);
-        sortedMap.remove(SIGN);
-        return Objects.equals(sign(sortedMap, key), sign);
-    }
-
-    /**
      * map转xml字符串
      */
     private static String mapToXmlString(Map<String, String> map) {
@@ -296,32 +325,6 @@ public class WeChatPayUtil {
     }
 
     /**
-     * XML格式字符串转换为Map
-     */
-    public static Map<String, String> xmlToMap(String xmlString) {
-        DocumentBuilder documentBuilder = newDocumentBuilder();
-        try (InputStream stream = new ByteArrayInputStream(xmlString.getBytes(StandardCharsets.UTF_8))) {
-            Document doc = documentBuilder.parse(stream);
-            Element rootElement = doc.getDocumentElement();
-            rootElement.normalize();
-
-            Map<String, String> data = new LinkedHashMap<>();
-            DomUtils.getChildElements(rootElement)
-                    .forEach(element -> data.put(element.getTagName(), DomUtils.getTextValue(element)));
-            return data;
-        } catch (IOException | SAXException e) {
-            throw new IllegalArgumentException("解析xml异常", e);
-        }
-    }
-
-    /**
-     * 微信支付通知时返回的成功信息
-     */
-    public static String successXml() {
-        return "<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>";
-    }
-
-    /**
      * 创建文档构建器
      */
     private static DocumentBuilder newDocumentBuilder() {
@@ -330,6 +333,28 @@ public class WeChatPayUtil {
         } catch (ParserConfigurationException e) {
             throw new IllegalArgumentException("创建xml文档构建器异常", e);
         }
+    }
+
+    /**
+     * 创建自定义的秘钥创建SSLContext
+     *
+     * @param p12File  *.p12的证书文件
+     * @param password 证书密码
+     * @return SSLContext
+     */
+    private static SSLContext createSSLContext(InputStream p12File, String password) {
+        SSLContext sc;
+        try {
+            KeyStore ks = KeyStore.getInstance("PKCS12");
+            ks.load(p12File, password.toCharArray());
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(ks, password.toCharArray());
+            sc = SSLContext.getInstance("TLS");
+            sc.init(kmf.getKeyManagers(), null, null);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("创建SSLContext失败");
+        }
+        return sc;
     }
 
     /**
