@@ -1,7 +1,6 @@
 package wwjay.demo.utils;
 
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClientException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -37,10 +36,10 @@ public class ZipUtil {
             if (filePaths != null && filePaths.length > 0) {
                 for (Path path : filePaths) {
                     if (!Files.exists(path)) {
-                        throw new IllegalArgumentException(path.toString() + "文件不存在");
+                        throw new ZipException(path.toString() + "文件不存在");
                     }
                     if (!Files.isRegularFile(path)) {
-                        throw new IllegalArgumentException(path.toString() + "不是一个文件");
+                        throw new ZipException(path.toString() + "不是一个文件");
                     }
                     ZipEntry zipEntry = new ZipEntry(path.getFileName().toString());
                     zipOutputStream.putNextEntry(zipEntry);
@@ -49,7 +48,7 @@ public class ZipUtil {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("打包zip文件失败:", e);
+            throw new ZipException("打包zip文件失败:", e);
         }
     }
 
@@ -73,10 +72,10 @@ public class ZipUtil {
      */
     public static void pack(final Path sourceDirPath, final Path zipFile) {
         if (!Files.exists(sourceDirPath)) {
-            throw new IllegalArgumentException("源文件夹不存在");
+            throw new ZipException("源文件夹不存在");
         }
         if (!Files.isDirectory(sourceDirPath)) {
-            throw new IllegalArgumentException("源路径不是一个文件夹");
+            throw new ZipException("源路径不是一个文件夹");
         }
 
         createZip(zipFile);
@@ -91,11 +90,11 @@ public class ZipUtil {
                             Files.copy(path, zipOutputStream);
                             zipOutputStream.closeEntry();
                         } catch (IOException e) {
-                            throw new RuntimeException("打包zip文件失败:", e);
+                            throw new ZipException("打包zip文件失败:", e);
                         }
                     });
         } catch (IOException e) {
-            throw new RuntimeException("打包zip文件失败:", e);
+            throw new ZipException("打包zip文件失败:", e);
         }
     }
 
@@ -111,7 +110,7 @@ public class ZipUtil {
 
         try (FileSystem fs = FileSystems.newFileSystem(zipFile, null)) {
             if (!Files.exists(source)) {
-                throw new IllegalArgumentException("源路径不存在");
+                throw new ZipException("源路径不存在");
             }
 
             Path path = fs.getPath(target != null ? target.toString() : "/");
@@ -134,10 +133,10 @@ public class ZipUtil {
             } else if (Files.isRegularFile(source)) {
                 Files.copy(source, path.resolve(source.getFileName().toString()), StandardCopyOption.REPLACE_EXISTING);
             } else {
-                throw new IllegalArgumentException("源路径必须是文件或者文件夹");
+                throw new ZipException("源路径必须是文件或者文件夹");
             }
         } catch (IOException e) {
-            throw new RuntimeException("添加文件失败:", e);
+            throw new ZipException("添加文件失败:", e);
         }
     }
 
@@ -164,7 +163,7 @@ public class ZipUtil {
             Path path = fs.getPath(filePath);
             return Files.readAllBytes(path);
         } catch (IOException e) {
-            throw new RuntimeException("读取zip文件失败:", e);
+            throw new ZipException("读取zip文件失败:", e);
         }
     }
 
@@ -178,7 +177,7 @@ public class ZipUtil {
         try {
             tempPath = Files.createTempDirectory(null);
         } catch (IOException e) {
-            throw new RuntimeException("创建临时目录失败:", e);
+            throw new ZipException("创建临时目录失败:", e);
         }
         unzip(zipFile, tempPath, extension);
         return tempPath;
@@ -223,12 +222,12 @@ public class ZipUtil {
                             Files.copy(path, zipElementPath, StandardCopyOption.REPLACE_EXISTING);
                         }
                     } catch (IOException e) {
-                        throw new RuntimeException("解压文件失败:", e);
+                        throw new ZipException("解压文件失败:", e);
                     }
                 });
             }
         } catch (IOException e) {
-            throw new RuntimeException("解压文件失败:", e);
+            throw new ZipException("解压文件失败:", e);
         }
     }
 
@@ -245,7 +244,7 @@ public class ZipUtil {
     public static void isValid(final Path file) {
         try (ZipFile zipfile = new ZipFile(file.toFile())) {
         } catch (IOException e) {
-            throw new IllegalArgumentException("验证ZIP文件失败:", e);
+            throw new ZipException("验证ZIP文件失败:", e);
         }
     }
 
@@ -255,7 +254,7 @@ public class ZipUtil {
     public static void isValid(final InputStream inputStream) {
         try (ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
         } catch (IOException e) {
-            throw new IllegalArgumentException("验证ZIP文件失败:", e);
+            throw new ZipException("验证ZIP文件失败:", e);
         }
     }
 
@@ -272,7 +271,7 @@ public class ZipUtil {
             is.transferTo(os);
             return new String(os.toByteArray(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new RestClientException("GZip解压失败", e);
+            throw new ZipException("GZip解压失败", e);
         }
     }
 
@@ -286,7 +285,18 @@ public class ZipUtil {
             Files.deleteIfExists(path);
             Files.createFile(path);
         } catch (IOException e) {
-            throw new RuntimeException("创建zip文件失败:", e);
+            throw new ZipException("创建zip文件失败:", e);
+        }
+    }
+
+    public static class ZipException extends RuntimeException {
+
+        public ZipException(String message) {
+            super(message);
+        }
+
+        public ZipException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }
