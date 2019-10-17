@@ -31,14 +31,21 @@ public class DateTimeUtil {
      * Date转LocalDateTime
      */
     public static LocalDateTime toLocalDateTime(Date date) {
-        return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+        return toLocalDateTime(date.toInstant());
     }
 
     /**
      * 毫秒的时间戳转LocalDateTime
      */
     public static LocalDateTime toLocalDateTime(long timestamp) {
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
+        return toLocalDateTime(Instant.ofEpochMilli(timestamp));
+    }
+
+    /**
+     * Instant转LocalDateTime
+     */
+    public static LocalDateTime toLocalDateTime(Instant instant) {
+        return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
     }
 
     /**
