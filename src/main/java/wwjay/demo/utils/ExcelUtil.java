@@ -7,9 +7,10 @@ import org.springframework.util.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * excel工具
@@ -24,6 +25,7 @@ public class ExcelUtil {
     public static final int SEARCH_DOWN = 3;
     public static final int SEARCH_LEFT = 4;
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private ExcelUtil() {
     }
@@ -48,11 +50,7 @@ public class ExcelUtil {
         Cell cell = sheet.getRow(row).getCell(col);
 
         // 设置合适的单元格格式
-        if (value instanceof Number) {
-            cell.setCellValue(Double.parseDouble(value.toString()));
-        } else {
-            cell.setCellValue(value.toString());
-        }
+        setCellValue(cell, value);
 
         // 添加合并单元格
         if (spanRow > 1) {
@@ -356,5 +354,32 @@ public class ExcelUtil {
             return null;
         }
         return file;
+    }
+
+    /**
+     * 自动根据value类型设置合适的单元格值
+     *
+     * @param cell  单元格
+     * @param value 单元格值
+     */
+    private static void setCellValue(Cell cell, Object value) {
+        if (cell == null || value == null) {
+            return;
+        }
+        if (value instanceof Number) {
+            cell.setCellValue(Double.parseDouble(value.toString()));
+        } else if (value instanceof Boolean) {
+            cell.setCellValue((Boolean) value);
+        } else if (value instanceof Date) {
+            cell.setCellValue((Date) value);
+        } else if (value instanceof LocalDateTime) {
+            cell.setCellValue(((LocalDateTime) value).format(FORMATTER));
+        } else if (value instanceof LocalDate) {
+            cell.setCellValue((LocalDate) value);
+        } else if (value instanceof Calendar) {
+            cell.setCellValue((Calendar) value);
+        } else {
+            cell.setCellValue(value.toString());
+        }
     }
 }
