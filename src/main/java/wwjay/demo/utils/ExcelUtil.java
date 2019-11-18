@@ -78,7 +78,6 @@ public class ExcelUtil {
             sourceRow = sheet.createRow(insertNumber);
         }
         // 从插入行开始到最后一行向下移动
-        // TODO poi4.x版本中shiftRows方法存在bug，https://bz.apache.org/bugzilla/show_bug.cgi?id=57423
         sheet.shiftRows(startRow, sheet.getLastRowNum(), insertNumber, true, false);
 
         // 填充移动后留下的空行
