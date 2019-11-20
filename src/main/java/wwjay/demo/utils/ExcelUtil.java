@@ -7,6 +7,7 @@ import org.springframework.util.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -371,7 +372,7 @@ public class ExcelUtil {
         } else if (value instanceof Boolean) {
             cell.setCellValue((Boolean) value);
         } else if (value instanceof Date) {
-            cell.setCellValue((Date) value);
+            cell.setCellValue(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((Date) value));
         } else if (value instanceof LocalDateTime) {
             cell.setCellValue(((LocalDateTime) value).format(FORMATTER));
         } else if (value instanceof LocalDate) {
