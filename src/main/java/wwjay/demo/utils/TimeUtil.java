@@ -1,5 +1,6 @@
 package wwjay.demo.utils;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -7,17 +8,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
- * 时间相关转换工具
+ * 时间相关工具
  *
  * @author wwj
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class DateTimeUtil {
+public class TimeUtil {
 
     public static final String DATA_PATTERN = "yyyy-MM-dd HH:mm:ss";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(DATA_PATTERN);
 
-    private DateTimeUtil() {
+    private TimeUtil() {
     }
 
     /**
@@ -60,5 +61,13 @@ public class DateTimeUtil {
      */
     public static Date toDate(LocalDateTime dateTime) {
         return Date.from(toInstant(dateTime));
+    }
+
+    /**
+     * 将Duration格式化成 H:MM:SS 的字符串
+     */
+    public static String prettyPrint(Duration duration) {
+        long s = duration.toSeconds();
+        return String.format("%d:%02d:%02d", s / 3600, (s % 3600) / 60, (s % 60));
     }
 }
