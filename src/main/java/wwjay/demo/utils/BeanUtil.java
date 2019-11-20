@@ -2,10 +2,11 @@ package wwjay.demo.utils;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.beans.PropertyAccessorFactory;
 
 import java.beans.FeatureDescriptor;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -78,16 +79,30 @@ public class BeanUtil {
     }
 
     /**
+     * 判断Bean对象中的所有字段是否为null
+     *
+     * @param object Bean对象
+     * @return 所有字段都为null时返回true，否则返回false
+     */
+    public static boolean fieldsIsNull(Object object) {
+        BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(object);
+        return Stream.of(beanWrapper.getPropertyDescriptors())
+                .map(FeatureDescriptor::getName)
+                .filter(propertyName -> !Objects.equals(propertyName, "class"))
+                .allMatch(propertyName -> beanWrapper.getPropertyValue(propertyName) == null);
+    }
+
+    /**
      * 获取对象中属性值为null的字段名
      *
      * @param source 源对象
      * @return 字段名数组
      */
     private static String[] getNullPropertyNames(Object source) {
-        final BeanWrapper wrappedSource = new BeanWrapperImpl(source);
-        return Stream.of(wrappedSource.getPropertyDescriptors())
+        BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(source);
+        return Stream.of(beanWrapper.getPropertyDescriptors())
                 .map(FeatureDescriptor::getName)
-                .filter(propertyName -> wrappedSource.getPropertyValue(propertyName) == null)
+                .filter(propertyName -> beanWrapper.getPropertyValue(propertyName) == null)
                 .toArray(String[]::new);
     }
 }
