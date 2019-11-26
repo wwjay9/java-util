@@ -343,18 +343,13 @@ public class ExcelUtil {
         if (workbook == null) {
             return null;
         }
-        byte[] file;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             workbook.write(bos);
-            file = bos.toByteArray();
-            bos.close();
-            workbook.close();
+            return bos.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
-        return file;
     }
 
     /**
