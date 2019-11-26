@@ -43,6 +43,7 @@ public class HttpUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(HttpUtil.class);
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+    private static final String APPLICATION_JSON_UTF8_VALUE = "application/json;charset=UTF-8";
 
     private HttpUtil() {
     }
@@ -170,7 +171,7 @@ public class HttpUtil {
      */
     public static String post(String url, String requestJson) throws RestClientException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
+                .header(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_UTF8_VALUE)
                 .POST(HttpRequest.BodyPublishers.ofString(requestJson))
                 .build();
         return send(request);
@@ -199,7 +200,7 @@ public class HttpUtil {
     public static String post(String username, String password, String url, String requestJson) throws RestClientException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .header(HttpHeaders.AUTHORIZATION, basicEncoder(username, password))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
+                .header(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_UTF8_VALUE)
                 .POST(HttpRequest.BodyPublishers.ofString(requestJson))
                 .build();
         return send(request);
