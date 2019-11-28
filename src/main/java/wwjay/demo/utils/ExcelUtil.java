@@ -244,6 +244,17 @@ public class ExcelUtil {
     /**
      * 获取合并单元格的范围地址，如果不是合并单元格返回null
      *
+     * @param cell 单元格
+     * @return 合并单元格的范围
+     */
+    @Nullable
+    public static CellRangeAddress getMergedCell(Cell cell) {
+        return getMergedCell(cell.getSheet(), cell.getRowIndex(), cell.getColumnIndex());
+    }
+
+    /**
+     * 获取合并单元格的范围地址，如果不是合并单元格返回null
+     *
      * @param sheet 工作表
      * @param row   行索引
      * @param col   列索引
