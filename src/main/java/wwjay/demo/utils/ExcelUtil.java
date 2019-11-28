@@ -108,6 +108,18 @@ public class ExcelUtil {
     /**
      * 向单元格写数据，只有value不为null，并且是合并单元格的左上角单元格时才写入数据
      *
+     * @param sheet 工作表
+     * @param value 值
+     * @param row   行索引
+     * @param col   列索引
+     */
+    public static void writeCellValue(Sheet sheet, Object value, int row, int col) {
+        writeCellValue(sheet, value, row, col, 0);
+    }
+
+    /**
+     * 向单元格写数据，只有value不为null，并且是合并单元格的左上角单元格时才写入数据
+     *
      * @param sheet   工作表
      * @param value   值
      * @param row     行索引
