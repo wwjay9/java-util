@@ -2,23 +2,32 @@ package wwjay.demo.utils;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.InvalidParameterException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * excel工具
  *
  * @author wwj
  */
-@SuppressWarnings({"unused", "WeakerAccess", "SpellCheckingInspection"})
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class ExcelUtil {
 
     public static final int SEARCH_UP = 1;
@@ -26,13 +35,78 @@ public class ExcelUtil {
     public static final int SEARCH_DOWN = 3;
     public static final int SEARCH_LEFT = 4;
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final String DEFAULT_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(DEFAULT_FORMAT);
 
     private ExcelUtil() {
     }
 
     /**
-     * 向单元格写数据
+     * 创建一个简单的Excel表格，并将表格写入临时文件中
+     *
+     * @param data 需要写入的数据
+     * @param <T>  表格中的表头根据对象字段的{@link ExcelProperty}注解生成，
+     *             所有带有{@link ExcelProperty}注解的字段都将写入表格中
+     * @return 临时文件路径
+     */
+    public static <T> Path writeToTempFile(List<T> data) {
+        Assert.notEmpty(data, "数据不能为空");
+        List<ColumnProperty> columnProperty = getExcelProperty(data.get(0).getClass());
+        Assert.notEmpty(columnProperty, "没有需要写入的字段");
+
+        Workbook workbook = XSSFWorkbookFactory.createWorkbook();
+        Sheet sheet = workbook.createSheet();
+
+        // 写入表头
+        Row headerRow = sheet.createRow(0);
+        for (int i = 0; i < columnProperty.size(); i++) {
+            ColumnProperty property = columnProperty.get(i);
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(property.getHeaderName());
+            Integer colWidth = property.getColWidth();
+            if (colWidth != null) {
+                sheet.setColumnWidth(i, colWidth);
+            }
+        }
+
+        // 写入行数据
+        for (int i = 0; i < data.size(); i++) {
+            T t = data.get(i);
+            BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(t);
+            Row row = sheet.createRow(i + 1);
+            for (int j = 0; j < columnProperty.size(); j++) {
+                ColumnProperty cp = columnProperty.get(j);
+                Object value = beanWrapper.getPropertyValue(cp.getFieldName());
+                Cell cell = row.createCell(j);
+                setCellValue(cell, value);
+            }
+        }
+        return writeToTempFile(workbook);
+    }
+
+    /**
+     * 将Workbook写入临时文件
+     *
+     * @param workbook 表格
+     * @return 临时文件目录
+     */
+    public static Path writeToTempFile(Workbook workbook) {
+        Path excelFilePath;
+        try {
+            excelFilePath = Files.createTempFile("excel", ".xlsx");
+        } catch (IOException e) {
+            throw new RuntimeException("创建临时文件失败", e);
+        }
+        try (workbook; FileOutputStream os = new FileOutputStream(excelFilePath.toFile())) {
+            workbook.write(os);
+        } catch (IOException e) {
+            throw new RuntimeException("写入Excel失败", e);
+        }
+        return excelFilePath;
+    }
+
+    /**
+     * 向单元格写数据，只有value不为null，并且是合并单元格的左上角单元格时才写入数据
      *
      * @param sheet   工作表
      * @param value   值
@@ -41,7 +115,6 @@ public class ExcelUtil {
      * @param spanRow 合并的行数
      */
     public static void writeCellValue(Sheet sheet, Object value, int row, int col, int spanRow) {
-        // 只有value不为null，并且是合并单元格的左上角单元格时才写入数据
         if (value == null) {
             return;
         }
@@ -67,9 +140,7 @@ public class ExcelUtil {
      * @param insertNumber 插入的行数
      */
     public static void insertRow(Sheet sheet, int startRow, int insertNumber) {
-        if (insertNumber <= 0) {
-            return;
-        }
+        Assert.isTrue(insertNumber > 0, "插入的行数必须大于0");
         // 插入位置的行
         Row sourceRow = sheet.getRow(startRow);
         // 如果插入的行不存在则创建新行
@@ -99,9 +170,7 @@ public class ExcelUtil {
      * @param endRow   结束行
      */
     public static void cleanData(Sheet sheet, int startRow, int endRow) {
-        if (endRow < startRow) {
-            throw new InvalidParameterException("开始行必须小于结束行");
-        }
+        Assert.isTrue(endRow >= startRow, "结束行必须大于等于开始行");
         for (int i = startRow; i <= endRow; i++) {
             Row row = sheet.getRow(i);
             if (row != null) {
@@ -125,9 +194,7 @@ public class ExcelUtil {
      * @param lastCol  右下角单元格的列
      */
     public static void cleanData(Sheet sheet, int firstRow, int firstCol, int lastRow, int lastCol) {
-        if (lastRow < firstRow || lastCol < firstCol) {
-            throw new InvalidParameterException("参数不正确");
-        }
+        Assert.isTrue(lastRow >= firstRow && lastCol >= firstCol, "参数不正确");
         for (int i = firstRow; i <= lastRow; i++) {
             Row row = sheet.getRow(i);
             if (row != null) {
@@ -149,9 +216,7 @@ public class ExcelUtil {
      * @param endRow   结束行
      */
     public static void remove(Sheet sheet, int startRow, int endRow) {
-        if (endRow < startRow) {
-            throw new InvalidParameterException("开始行必须小于结束行");
-        }
+        Assert.isTrue(endRow >= startRow, "结束行必须大于等于开始行");
         for (int i = startRow; i <= endRow; i++) {
             remove(sheet, startRow);
         }
@@ -184,10 +249,9 @@ public class ExcelUtil {
      * @param col   列索引
      * @return 合并单元格的范围
      */
+    @Nullable
     public static CellRangeAddress getMergedCell(Sheet sheet, int row, int col) {
-        if (sheet == null || row < 0 || col < 0) {
-            throw new InvalidParameterException("参数错误");
-        }
+        Assert.isTrue(sheet != null && row >= 0 && col >= 0, "参数错误");
         for (CellRangeAddress range : sheet.getMergedRegions()) {
             if (range.isInRange(row, col)) {
                 return range;
@@ -205,11 +269,9 @@ public class ExcelUtil {
      * @return 如果是所在合并单元格的左上角单元格时返回true，否则返回false
      */
     public static boolean testMergedFirstCell(Sheet sheet, int row, int col) {
-        if (sheet == null || row < 0 || col < 0) {
-            throw new InvalidParameterException("参数错误");
-        }
+        Assert.isTrue(sheet != null && row >= 0 && col >= 0, "参数错误");
         return Optional.ofNullable(sheet.getMergedRegions())
-                .map(cras -> cras.stream().anyMatch(cra -> cra.getFirstRow() == row && cra.getFirstColumn() == col))
+                .map(mr -> mr.stream().anyMatch(cra -> cra.getFirstRow() == row && cra.getFirstColumn() == col))
                 .orElse(false);
     }
 
@@ -221,10 +283,9 @@ public class ExcelUtil {
      * @param col   列索引
      * @return 单元格的值
      */
+    @Nullable
     public static String getCellValue(Sheet sheet, int row, int col) {
-        if (sheet == null || row < 0 || col < 0) {
-            return null;
-        }
+        Assert.isTrue(sheet != null && row >= 0 && col >= 0, "参数错误");
         List<CellRangeAddress> craList = sheet.getMergedRegions();
         if (sheet.getRow(row) == null) {
             return null;
@@ -284,6 +345,7 @@ public class ExcelUtil {
      * @param direction 方向,1:上、2:右、3:下、4:左
      * @return 关键字附近的值
      */
+    @Nullable
     public static String searchNearby(Sheet sheet, String keyword, int direction) {
         if (sheet == null || !StringUtils.hasText(keyword)) {
             return null;
@@ -316,6 +378,7 @@ public class ExcelUtil {
      * @param keyword 关键字
      * @return 单元格
      */
+    @Nullable
     public static Cell searchCell(Sheet sheet, String keyword) {
         if (sheet == null || !StringUtils.hasText(keyword)) {
             return null;
@@ -343,12 +406,11 @@ public class ExcelUtil {
         if (workbook == null) {
             return null;
         }
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+        try (workbook; ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             workbook.write(bos);
             return bos.toByteArray();
         } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException("workbook转换失败", e);
         }
     }
 
@@ -367,7 +429,7 @@ public class ExcelUtil {
         } else if (value instanceof Boolean) {
             cell.setCellValue((Boolean) value);
         } else if (value instanceof Date) {
-            cell.setCellValue(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((Date) value));
+            cell.setCellValue(new SimpleDateFormat(DEFAULT_FORMAT).format((Date) value));
         } else if (value instanceof LocalDateTime) {
             cell.setCellValue(((LocalDateTime) value).format(FORMATTER));
         } else if (value instanceof LocalDate) {
@@ -376,6 +438,46 @@ public class ExcelUtil {
             cell.setCellValue((Calendar) value);
         } else {
             cell.setCellValue(value.toString());
+        }
+    }
+
+    /**
+     * 获取申明了ExcelProperty注解字段的值
+     */
+    private static <T> List<ColumnProperty> getExcelProperty(Class<T> clazz) {
+        return Stream.of(clazz.getDeclaredFields())
+                .filter(field -> field.isAnnotationPresent(ExcelProperty.class))
+                .map(field -> {
+                    String name = field.getName();
+                    ExcelProperty property = field.getAnnotation(ExcelProperty.class);
+                    return new ColumnProperty(name, property.value(), property.width());
+                })
+                .collect(Collectors.toList());
+    }
+
+    private static class ColumnProperty {
+
+        private String fieldName;
+        private String headerName;
+        private short colWidth;
+
+        private ColumnProperty(String fieldName, String headerName, short colWidth) {
+            Assert.isTrue(colWidth < 255, "列宽最大不能超过255个字符");
+            this.fieldName = fieldName;
+            this.headerName = headerName;
+            this.colWidth = colWidth;
+        }
+
+        private String getFieldName() {
+            return fieldName;
+        }
+
+        private String getHeaderName() {
+            return headerName;
+        }
+
+        private Integer getColWidth() {
+            return colWidth > -1 ? colWidth * 256 : null;
         }
     }
 }
