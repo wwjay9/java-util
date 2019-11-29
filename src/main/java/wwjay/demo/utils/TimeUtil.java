@@ -1,5 +1,8 @@
 package wwjay.demo.utils;
 
+import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -24,13 +27,15 @@ public class TimeUtil {
     /**
      * yyyy-MM-dd HH:mm:ss格式的字符串转LocalDateTime
      */
+    @Nullable
     public static LocalDateTime toLocalDateTime(String date) {
-        return LocalDateTime.parse(date, FORMATTER);
+        return StringUtils.hasText(date) ? LocalDateTime.parse(date, FORMATTER) : null;
     }
 
     /**
      * Date转LocalDateTime
      */
+    @Nullable
     public static LocalDateTime toLocalDateTime(Date date) {
         return toLocalDateTime(date.toInstant());
     }
@@ -38,6 +43,7 @@ public class TimeUtil {
     /**
      * 毫秒的时间戳转LocalDateTime
      */
+    @Nullable
     public static LocalDateTime toLocalDateTime(long timestamp) {
         return toLocalDateTime(Instant.ofEpochMilli(timestamp));
     }
@@ -45,28 +51,36 @@ public class TimeUtil {
     /**
      * Instant转LocalDateTime
      */
+    @Nullable
     public static LocalDateTime toLocalDateTime(Instant instant) {
-        return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+        return instant != null ? LocalDateTime.ofInstant(instant, ZoneId.systemDefault()) : null;
     }
 
     /**
      * LocalDateTime转Instant
      */
+    @Nullable
     public static Instant toInstant(LocalDateTime dateTime) {
-        return dateTime.atZone(ZoneId.systemDefault()).toInstant();
+        return dateTime != null ? dateTime.atZone(ZoneId.systemDefault()).toInstant() : null;
     }
 
     /**
      * LocalDateTime转Date
      */
+    @Nullable
     public static Date toDate(LocalDateTime dateTime) {
-        return Date.from(toInstant(dateTime));
+        Instant instant = toInstant(dateTime);
+        return instant != null ? Date.from(instant) : null;
     }
 
     /**
      * 将Duration格式化成 H:MM:SS 的字符串
      */
+    @Nullable
     public static String prettyPrint(Duration duration) {
+        if (duration == null) {
+            return null;
+        }
         long s = duration.toSeconds();
         return String.format("%d:%02d:%02d", s / 3600, (s % 3600) / 60, (s % 60));
     }
