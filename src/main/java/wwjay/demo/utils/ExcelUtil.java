@@ -108,6 +108,17 @@ public class ExcelUtil {
     /**
      * 向单元格写数据，只有value不为null，并且是合并单元格的左上角单元格时才写入数据
      *
+     * @param cell  单元格
+     * @param value 值
+     */
+    public static void writeCellValue(Cell cell, Object value) {
+        Assert.notNull(cell, "单元格不能为空");
+        writeCellValue(cell.getSheet(), value, cell.getRowIndex(), cell.getColumnIndex());
+    }
+
+    /**
+     * 向单元格写数据，只有value不为null，并且是合并单元格的左上角单元格时才写入数据
+     *
      * @param sheet 工作表
      * @param value 值
      * @param row   行索引
@@ -296,6 +307,35 @@ public class ExcelUtil {
         return Optional.ofNullable(sheet.getMergedRegions())
                 .map(mr -> mr.stream().anyMatch(cra -> cra.getFirstRow() == row && cra.getFirstColumn() == col))
                 .orElse(false);
+    }
+
+    /**
+     * 拆分cell所在的合并单元格
+     *
+     * @param cell 单元格
+     */
+    public static void splitCell(Cell cell) {
+        Assert.notNull(cell, "单元格不能为空");
+        Sheet sheet = cell.getSheet();
+        for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
+            if (sheet.getMergedRegion(i).isInRange(cell)) {
+                sheet.removeMergedRegion(i);
+            }
+        }
+    }
+
+    /**
+     * 获取单元格的值，包括合并单元格的
+     *
+     * @param cell 单元格
+     * @return 单元格的值
+     */
+    @Nullable
+    public static String getCellValue(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+        return getCellValue(cell.getSheet(), cell.getRowIndex(), cell.getColumnIndex());
     }
 
     /**
