@@ -358,6 +358,8 @@ public class ExcelUtil {
         String endAddress = sheet.getRow(sumEndRow).getCell(formulaCol).getAddress().toString();
         String cellFormula = "SUM(" + startAddress + ":" + endAddress + ")";
         sumCell.setCellFormula(cellFormula);
+        // 插入公式以后让公式生效
+        sheet.getWorkbook().getCreationHelper().createFormulaEvaluator().evaluateAll();
     }
 
     /**
