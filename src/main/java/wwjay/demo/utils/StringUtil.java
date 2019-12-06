@@ -1,9 +1,7 @@
 package wwjay.demo.utils;
 
 import java.security.SecureRandom;
-import java.util.Locale;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * 字符串工具
@@ -16,7 +14,7 @@ public class StringUtil {
     private static final String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final String LOWER = UPPER.toLowerCase(Locale.ROOT);
     private static final String DIGITS = "0123456789";
-    private static final String ALPHANUM = UPPER + LOWER + DIGITS;
+    private static final String ALPHANUM = DIGITS + LOWER + UPPER;
     private static final Random RANDOM = new SecureRandom();
     private static final char[] SYMBOLS = ALPHANUM.toCharArray();
 
@@ -62,5 +60,26 @@ public class StringUtil {
             return str;
         }
         return str.substring(0, size);
+    }
+
+    /**
+     * 将十进制数字转换成62进制
+     *
+     * @param num 十进制数字
+     * @return 返回0-9、a-z、A-Z的62进制字符
+     */
+    public static String base62(long num) {
+        if (num == 0) {
+            return String.valueOf(SYMBOLS[0]);
+        }
+        List<String> arr = new ArrayList<>();
+        int base = SYMBOLS.length;
+        while (num > 0) {
+            long rem = num % base;
+            num = (num - rem) / base;
+            arr.add(String.valueOf(SYMBOLS[Math.toIntExact(rem)]));
+        }
+        Collections.reverse(arr);
+        return String.join("", arr);
     }
 }
