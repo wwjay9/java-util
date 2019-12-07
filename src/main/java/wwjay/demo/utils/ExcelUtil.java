@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -59,7 +60,7 @@ public class ExcelUtil {
 
         // 写入表头
         Row headerRow = sheet.createRow(0);
-        for (int i = 0; i < columnProperty.size(); i++) {
+        IntStream.range(0, columnProperty.size()).forEachOrdered(i -> {
             ColumnProperty property = columnProperty.get(i);
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(property.getHeaderName());
@@ -67,20 +68,20 @@ public class ExcelUtil {
             if (colWidth != null) {
                 sheet.setColumnWidth(i, colWidth);
             }
-        }
+        });
 
         // 写入行数据
-        for (int i = 0; i < data.size(); i++) {
+        IntStream.range(0, data.size()).forEachOrdered(i -> {
             T t = data.get(i);
             BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(t);
             Row row = sheet.createRow(i + 1);
-            for (int j = 0; j < columnProperty.size(); j++) {
+            IntStream.range(0, columnProperty.size()).forEachOrdered(j -> {
                 ColumnProperty cp = columnProperty.get(j);
                 Object value = beanWrapper.getPropertyValue(cp.getFieldName());
                 Cell cell = row.createCell(j);
                 setCellValue(cell, value);
-            }
-        }
+            });
+        });
         return writeToTempFile(workbook);
     }
 
@@ -164,25 +165,21 @@ public class ExcelUtil {
      */
     public static void insertRow(Sheet sheet, int startRow, int insertNumber) {
         Assert.isTrue(insertNumber > 0, "插入的行数必须大于0");
-        // 插入位置的行
-        Row sourceRow = sheet.getRow(startRow);
-        // 如果插入的行不存在则创建新行
-        if (sourceRow == null) {
-            sourceRow = sheet.createRow(insertNumber);
-        }
+        // 插入位置的行，如果插入的行不存在则创建新行
+        Row sourceRow = Optional.ofNullable(sheet.getRow(startRow)).orElse(sheet.createRow(insertNumber));
         // 从插入行开始到最后一行向下移动
         sheet.shiftRows(startRow, sheet.getLastRowNum(), insertNumber, true, false);
 
         // 填充移动后留下的空行
-        for (int i = startRow; i < startRow + insertNumber; i++) {
+        IntStream.range(startRow, startRow + insertNumber).forEachOrdered(i -> {
             Row row = sheet.createRow(i);
             row.setHeightInPoints(sourceRow.getHeightInPoints());
             short lastCellNum = sourceRow.getLastCellNum();
-            for (int x = 0; x < lastCellNum; x++) {
-                Cell cell = row.createCell(x);
-                cell.setCellStyle(sourceRow.getCell(x).getCellStyle());
-            }
-        }
+            IntStream.range(0, lastCellNum).forEachOrdered(j -> {
+                Cell cell = row.createCell(j);
+                cell.setCellStyle(sourceRow.getCell(j).getCellStyle());
+            });
+        });
     }
 
     /**
@@ -194,17 +191,14 @@ public class ExcelUtil {
      */
     public static void cleanData(Sheet sheet, int startRow, int endRow) {
         Assert.isTrue(endRow >= startRow, "结束行必须大于等于开始行");
-        for (int i = startRow; i <= endRow; i++) {
-            Row row = sheet.getRow(i);
-            if (row != null) {
-                for (int y = 0; y <= row.getLastCellNum(); y++) {
-                    Cell cell = row.getCell(y);
-                    if (cell != null) {
-                        cell.setBlank();
-                    }
-                }
-            }
-        }
+        IntStream.rangeClosed(startRow, endRow)
+                .mapToObj(sheet::getRow)
+                .filter(Objects::nonNull)
+                .forEachOrdered(row ->
+                        IntStream.rangeClosed(0, row.getLastCellNum())
+                                .mapToObj(row::getCell)
+                                .filter(Objects::nonNull)
+                                .forEachOrdered(Cell::setBlank));
     }
 
     /**
@@ -218,17 +212,14 @@ public class ExcelUtil {
      */
     public static void cleanData(Sheet sheet, int firstRow, int firstCol, int lastRow, int lastCol) {
         Assert.isTrue(lastRow >= firstRow && lastCol >= firstCol, "参数不正确");
-        for (int i = firstRow; i <= lastRow; i++) {
-            Row row = sheet.getRow(i);
-            if (row != null) {
-                for (int y = firstCol; y <= lastCol; y++) {
-                    Cell cell = row.getCell(y);
-                    if (cell != null) {
-                        cell.setBlank();
-                    }
-                }
-            }
-        }
+        IntStream.rangeClosed(firstRow, lastRow)
+                .mapToObj(sheet::getRow)
+                .filter(Objects::nonNull)
+                .forEachOrdered(row ->
+                        IntStream.rangeClosed(firstCol, lastCol)
+                                .mapToObj(row::getCell)
+                                .filter(Objects::nonNull)
+                                .forEachOrdered(Cell::setBlank));
     }
 
     /**
@@ -240,9 +231,7 @@ public class ExcelUtil {
      */
     public static void remove(Sheet sheet, int startRow, int endRow) {
         Assert.isTrue(endRow >= startRow, "结束行必须大于等于开始行");
-        for (int i = startRow; i <= endRow; i++) {
-            remove(sheet, startRow);
-        }
+        IntStream.rangeClosed(startRow, endRow).forEachOrdered(i -> remove(sheet, startRow));
     }
 
     /**
@@ -317,11 +306,9 @@ public class ExcelUtil {
     public static void splitCell(Cell cell) {
         Assert.notNull(cell, "单元格不能为空");
         Sheet sheet = cell.getSheet();
-        for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
-            if (sheet.getMergedRegion(i).isInRange(cell)) {
-                sheet.removeMergedRegion(i);
-            }
-        }
+        IntStream.range(0, sheet.getNumMergedRegions())
+                .filter(i -> sheet.getMergedRegion(i).isInRange(cell))
+                .forEachOrdered(sheet::removeMergedRegion);
     }
 
     /**
@@ -356,18 +343,12 @@ public class ExcelUtil {
         Cell cell = sheet.getRow(row).getCell(col);
         // WPS的合并单元格只有左上角的单元格有值
         if (cell == null) {
-            return Optional.ofNullable(craList)
-                    .map(mergedRegions -> {
-                        for (CellRangeAddress cra : mergedRegions) {
-                            if (cra.isInRange(row, col)) {
-                                Cell firstCell = sheet.getRow(cra.getFirstRow()).getCell(cra.getFirstColumn());
-                                if (firstCell != null) {
-                                    return DATA_FORMATTER.formatCellValue(firstCell);
-                                }
-                            }
-                        }
-                        return null;
-                    })
+            return Optional.ofNullable(craList).stream()
+                    .flatMap(List::stream)
+                    .filter(cra -> cra.isInRange(row, col))
+                    .findFirst()
+                    .map(cra -> sheet.getRow(cra.getFirstRow()).getCell(cra.getFirstColumn()))
+                    .map(DATA_FORMATTER::formatCellValue)
                     .orElse(null);
         }
         String value = DATA_FORMATTER.formatCellValue(cell);
@@ -452,8 +433,9 @@ public class ExcelUtil {
             Row row = sheet.getRow(i);
             if (row != null) {
                 for (int y = 0; y <= row.getLastCellNum(); y++) {
-                    if (Objects.equals(keyword, getCellValue(sheet, i, y))) {
-                        return sheet.getRow(i).getCell(y);
+                    Cell cell = row.getCell(y);
+                    if (Objects.equals(keyword, getCellValue(cell))) {
+                        return cell;
                     }
                 }
             }
