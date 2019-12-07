@@ -7,6 +7,7 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StringUtils;
 
 import javax.imageio.ImageIO;
@@ -112,7 +113,7 @@ public class QrCodeUtil {
      */
     public static BufferedImage generateBackdropQrCode(String text, int size, String resourceFilePath, int x, int y) {
         BufferedImage qrCode = generateQrCodeImage(text, size);
-        try (InputStream backdropIs = QrCodeUtil.class.getResourceAsStream(resourceFilePath)) {
+        try (InputStream backdropIs = new ClassPathResource(resourceFilePath).getInputStream()) {
             return splice(ImageIO.read(backdropIs), qrCode, x, y);
         } catch (IOException e) {
             throw new IllegalArgumentException("读取背景图失败", e);
