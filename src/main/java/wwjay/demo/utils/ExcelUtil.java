@@ -166,7 +166,7 @@ public class ExcelUtil {
     public static void insertRow(Sheet sheet, int startRow, int insertNumber) {
         Assert.isTrue(insertNumber > 0, "插入的行数必须大于0");
         // 插入位置的行，如果插入的行不存在则创建新行
-        Row sourceRow = Optional.ofNullable(sheet.getRow(startRow)).orElse(sheet.createRow(insertNumber));
+        Row sourceRow = Optional.ofNullable(sheet.getRow(startRow)).orElseGet(() -> sheet.createRow(insertNumber));
         // 从插入行开始到最后一行向下移动
         sheet.shiftRows(startRow, sheet.getLastRowNum(), insertNumber, true, false);
 
