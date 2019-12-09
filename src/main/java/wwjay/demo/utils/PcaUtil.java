@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
  * @author wwj
  */
 @SuppressWarnings("unused")
-public class PacUtil {
+public class PcaUtil {
 
     private static final Map<String, String> CODE_NAME_MAP = new HashMap<>();
 
@@ -38,7 +38,7 @@ public class PacUtil {
         }
     }
 
-    private PacUtil() {
+    private PcaUtil() {
     }
 
     /**
