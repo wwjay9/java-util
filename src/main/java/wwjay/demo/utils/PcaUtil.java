@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -25,6 +26,7 @@ import java.util.stream.IntStream;
 public class PcaUtil {
 
     private static final Map<String, String> CODE_NAME_MAP = new HashMap<>();
+    private static final String MUNICIPALITY = "市辖区";
 
     static {
         try (InputStream inputStream = new ClassPathResource("static/pca-code.json").getInputStream()) {
@@ -42,7 +44,7 @@ public class PcaUtil {
     }
 
     /**
-     * 根据区域代码获取区域名称
+     * 根据区域代码获取区域名称，当code为直辖市或区时，返回上一级行政区域名称
      *
      * @param code 区域代码
      * @return 区域名称
@@ -50,6 +52,10 @@ public class PcaUtil {
     public static String checkCode(String code) {
         String name = CODE_NAME_MAP.get(code);
         Assert.notNull(name, "地区代码" + code + "不存在");
+        if (Objects.equals(name, MUNICIPALITY)) {
+            String s = code.substring(0, code.length() - 2);
+            return checkCode(s);
+        }
         return name;
     }
 
