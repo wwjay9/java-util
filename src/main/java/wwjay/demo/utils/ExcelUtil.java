@@ -2,6 +2,8 @@ package wwjay.demo.utils;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellRangeUtil;
+import org.apache.poi.ss.util.CellUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -441,17 +443,6 @@ public class ExcelUtil {
             }
         }
         return null;
-    }
-
-    /**
-     * 将单元格设置为水平对齐
-     *
-     * @param cell 单元格
-     */
-    public static void setHorizontalAlignment(Cell cell) {
-        CellStyle cellStyle = cell.getSheet().getWorkbook().createCellStyle();
-        cellStyle.setAlignment(HorizontalAlignment.CENTER);
-        cell.setCellStyle(cellStyle);
     }
 
     /**
