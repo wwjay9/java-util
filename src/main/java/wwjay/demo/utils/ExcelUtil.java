@@ -444,6 +444,17 @@ public class ExcelUtil {
     }
 
     /**
+     * 将单元格设置为水平对齐
+     *
+     * @param cell 单元格
+     */
+    public static void setHorizontalAlignment(Cell cell) {
+        CellStyle cellStyle = cell.getSheet().getWorkbook().createCellStyle();
+        cellStyle.setAlignment(HorizontalAlignment.CENTER);
+        cell.setCellStyle(cellStyle);
+    }
+
+    /**
      * 将Workbook转换成byte[]，并关闭流
      *
      * @param workbook 工作表
