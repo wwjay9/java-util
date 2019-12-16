@@ -8,6 +8,7 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import javax.imageio.ImageIO;
@@ -58,19 +59,14 @@ public class QrCodeUtil {
         BitMatrix bitMatrix = generate(text, size, size);
         // 从文件路径中提出文件格式
         String format = StringUtils.getFilenameExtension(path.toString());
-        if (format == null) {
-            throw new IllegalArgumentException("文件路径不正确,路径必须包含文件扩展名");
-        }
+        Assert.notNull(format, "文件路径不正确,路径必须包含文件扩展名");
         try {
             MatrixToImageWriter.writeToPath(bitMatrix, format, path);
         } catch (IOException e) {
             throw new RuntimeException("保存二维码图片出错", e);
         }
-        if (Files.isRegularFile(path)) {
-            return path;
-        } else {
-            throw new IllegalArgumentException("未能检测到生成的文件");
-        }
+        Assert.isTrue(Files.isRegularFile(path), "未能检测到生成的文件");
+        return path;
     }
 
     /**
