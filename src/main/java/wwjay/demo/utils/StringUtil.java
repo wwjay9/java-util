@@ -82,4 +82,21 @@ public class StringUtil {
         Collections.reverse(arr);
         return String.join("", arr);
     }
+
+    /**
+     * 将byte字节大小格式化成方便阅读的格式
+     *
+     * @param bytes 字节大小
+     * @return 格式化字符串
+     */
+    public static String dataSizeFormat(long bytes) {
+        long b = bytes == Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(bytes);
+        return b < 1024L ? bytes + " B"
+                : b <= 0xfffccccccccccccL >> 40 ? String.format("%.1f KB", bytes / 0x1p10)
+                : b <= 0xfffccccccccccccL >> 30 ? String.format("%.1f MB", bytes / 0x1p20)
+                : b <= 0xfffccccccccccccL >> 20 ? String.format("%.1f GB", bytes / 0x1p30)
+                : b <= 0xfffccccccccccccL >> 10 ? String.format("%.1f TB", bytes / 0x1p40)
+                : b <= 0xfffccccccccccccL ? String.format("%.1f PB", (bytes >> 10) / 0x1p40)
+                : String.format("%.1f EB", (bytes >> 20) / 0x1p40);
+    }
 }
