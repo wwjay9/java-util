@@ -76,6 +76,22 @@ public class TimeUtil {
     }
 
     /**
+     * 将Date转换成yyyy-MM-dd HH:mm:ss格式的字符串
+     */
+    @Nullable
+    public static String toString(Date date) {
+        return toString(toLocalDateTime(date));
+    }
+
+    /**
+     * 将LocalDateTime转换成yyyy-MM-dd HH:mm:ss格式的字符串
+     */
+    @Nullable
+    public static String toString(LocalDateTime dateTime) {
+        return dateTime == null ? null : dateTime.format(FORMATTER);
+    }
+
+    /**
      * 将Duration格式化成 H:MM:SS 的字符串
      */
     @Nullable
