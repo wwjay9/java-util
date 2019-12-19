@@ -2,6 +2,7 @@ package wwjay.demo.utils;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -145,10 +146,9 @@ public class ExcelUtil {
         if (getMergedCell(sheet, row, col) != null && !testMergedFirstCell(sheet, row, col)) {
             return;
         }
-        Cell cell = sheet.getRow(row).getCell(col);
 
         // 设置合适的单元格格式
-        setCellValue(cell, value);
+        setCellValue(CellUtil.getCell(sheet.getRow(row), col), value);
 
         // 添加合并单元格
         if (spanRow > 1) {
