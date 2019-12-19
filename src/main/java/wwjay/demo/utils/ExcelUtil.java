@@ -164,7 +164,9 @@ public class ExcelUtil {
      * @param insertNumber 插入的行数
      */
     public static void insertRow(Sheet sheet, int startRow, int insertNumber) {
-        Assert.isTrue(insertNumber > 0, "插入的行数必须大于0");
+        if (insertNumber <= 0) {
+            return;
+        }
         // 插入位置的行，如果插入的行不存在则创建新行
         Row sourceRow = Optional.ofNullable(sheet.getRow(startRow)).orElseGet(() -> sheet.createRow(insertNumber));
         // 从插入行开始到最后一行向下移动
@@ -360,7 +362,7 @@ public class ExcelUtil {
                 }
             }
         }
-        return value;
+        return value != null ? value.trim() : null;
     }
 
     /**
