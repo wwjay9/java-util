@@ -13,6 +13,8 @@ import org.springframework.util.StringUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -252,14 +254,10 @@ public class QrCodeUtil {
      * @return 缩放后的图片
      */
     private static BufferedImage zoom(BufferedImage image, double scale) {
-        int newWidth = Double.valueOf(image.getWidth() * scale).intValue();
-        int newHeight = Double.valueOf(image.getHeight() * scale).intValue();
-        BufferedImage after = new BufferedImage(newWidth, newHeight, image.getType());
-        Graphics2D g = after.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.drawImage(image, 0, 0, newWidth, newHeight, 0, 0, image.getWidth(),
-                image.getHeight(), null);
-        g.dispose();
-        return after;
+        BufferedImage after = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        AffineTransform at = new AffineTransform();
+        at.scale(scale, scale);
+        AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+        return scaleOp.filter(image, after);
     }
 }
