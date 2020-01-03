@@ -277,12 +277,11 @@ public class ExcelUtil {
     @Nullable
     public static CellRangeAddress getMergedCell(Sheet sheet, int row, int col) {
         Assert.isTrue(sheet != null && row >= 0 && col >= 0, "参数错误");
-        for (CellRangeAddress range : sheet.getMergedRegions()) {
-            if (range.isInRange(row, col)) {
-                return range;
-            }
-        }
-        return null;
+        return sheet.getMergedRegions()
+                .stream()
+                .filter(range -> range.isInRange(row, col))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
