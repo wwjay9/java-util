@@ -126,9 +126,11 @@ public class QrCodeUtil {
      * @return 拼接后的图
      */
     public static BufferedImage splice(BufferedImage backdrop, BufferedImage front, int x, int y) {
-        Graphics graphics = backdrop.getGraphics();
-        graphics.drawImage(front, x, y, null);
-        return backdrop;
+        BufferedImage combined = new BufferedImage(backdrop.getWidth(), backdrop.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics g = combined.getGraphics();
+        g.drawImage(backdrop, 0, 0, null);
+        g.drawImage(front, x, y, null);
+        return combined;
     }
 
     /**
