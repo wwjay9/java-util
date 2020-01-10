@@ -3,6 +3,7 @@ package wwjay.demo.utils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.util.StringUtils;
 
 import java.beans.FeatureDescriptor;
 import java.util.List;
@@ -76,6 +77,24 @@ public class BeanUtil {
      */
     public static void copyNotNullProperties(Object source, Object target) {
         BeanUtils.copyProperties(source, target, getNullPropertyNames(source));
+    }
+
+    /**
+     * 将source对象中不为null或toString不为空字符串的属性值复制到target对象中
+     *
+     * @param source 源对象
+     * @param target 目标对象
+     */
+    public static void copyNotEmptyProperties(Object source, Object target) {
+        BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(source);
+        String[] emptyFields = Stream.of(beanWrapper.getPropertyDescriptors())
+                .filter(property -> {
+                    Object value = beanWrapper.getPropertyValue(property.getName());
+                    return value == null || !StringUtils.hasText(value.toString());
+                })
+                .map(FeatureDescriptor::getName)
+                .toArray(String[]::new);
+        BeanUtils.copyProperties(source, target, emptyFields);
     }
 
     /**
