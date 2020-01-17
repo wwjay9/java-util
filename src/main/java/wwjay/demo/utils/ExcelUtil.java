@@ -2,7 +2,9 @@ package wwjay.demo.utils;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellRangeUtil;
 import org.apache.poi.ss.util.CellUtil;
+import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -11,6 +13,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -182,6 +185,141 @@ public class ExcelUtil {
                 cell.setCellStyle(sourceRow.getCell(j).getCellStyle());
             });
         });
+    }
+
+    /**
+     * 合并单元格，如果cra为单个单元格则忽略
+     *
+     * @param sheet 工作表
+     * @param cra   单元格区间
+     */
+    public static void addMergedRegion(Sheet sheet, CellRangeAddress cra) {
+        if (cra.getFirstRow() < cra.getLastRow() || cra.getFirstColumn() < cra.getLastColumn()) {
+            sheet.addMergedRegion(cra);
+        }
+    }
+
+    /**
+     * 设置单元格四周的边框
+     *
+     * @param cell        单元格
+     * @param borderStyle 边框样式
+     */
+    public static void setCellBorder(Cell cell, BorderStyle borderStyle) {
+        CellStyle cellStyle = cell.getCellStyle();
+        cellStyle.setBorderTop(borderStyle);
+        cellStyle.setBorderRight(borderStyle);
+        cellStyle.setBorderBottom(borderStyle);
+        cellStyle.setBorderLeft(borderStyle);
+    }
+
+    /**
+     * 将选中的单元格复制到指定的位置
+     *
+     * @param sourceSheet      源工作表
+     * @param sourceAddress    复制的单元格范围
+     * @param targetOriginCell 粘贴处的起点单元格（左上角）
+     */
+    public static void copyCellRange(Sheet sourceSheet, CellRangeAddress sourceAddress, Cell targetOriginCell) {
+        Sheet targetSheet = targetOriginCell.getSheet();
+        int targetRowIdx = targetOriginCell.getRowIndex();
+
+        for (int i = sourceAddress.getFirstRow(); i <= sourceAddress.getLastRow(); i++, targetRowIdx++) {
+            Row sourceRow = CellUtil.getRow(i, sourceSheet);
+            Row targetRow = CellUtil.getRow(targetRowIdx, targetSheet);
+
+            for (int j = sourceAddress.getFirstColumn(), targetColumn = targetOriginCell.getColumnIndex();
+                 j <= sourceAddress.getLastColumn(); j++, targetColumn++) {
+                Cell sourceCell = CellUtil.getCell(sourceRow, j);
+                Cell targetCell = CellUtil.getCell(targetRow, targetColumn);
+                // 复制单元格值
+                copyCellValue(sourceCell, targetCell);
+                // 复制样式
+                targetCell.setCellStyle(sourceCell.getCellStyle());
+                // 设置列宽
+                targetSheet.setColumnWidth(targetColumn, sourceSheet.getColumnWidth(j));
+            }
+            // 设置行高
+            targetRow.setHeight(sourceRow.getHeight());
+        }
+
+        // 计算偏移量
+        int offsetX = targetOriginCell.getColumnIndex() - sourceAddress.getFirstColumn();
+        int offsetY = targetOriginCell.getRowIndex() - sourceAddress.getFirstRow();
+        sourceSheet.getMergedRegions()
+                .stream()
+                // 查找要复制区域中包含的合并单元格
+                .filter(address -> CellRangeUtil.contains(sourceAddress, address))
+                // 设置偏移量
+                .peek(address -> {
+                    address.setFirstRow(address.getFirstRow() + offsetY);
+                    address.setFirstColumn(address.getFirstColumn() + offsetX);
+                    address.setLastRow(address.getLastRow() + offsetY);
+                    address.setLastColumn(address.getLastColumn() + offsetX);
+                })
+                // 将合并的单元格复制过来
+                .forEach(targetSheet::addMergedRegion);
+        // 验证合并单元格
+        targetSheet.validateMergedRegions();
+    }
+
+    public static void main(String[] args) throws IOException {
+        Workbook wb = WorkbookFactory.create(new File("/卡板明细.xlsx"));
+        // 创建新sheet
+        String sheetName = WorkbookUtil.createSafeSheetName("Summary");
+        Sheet targetSheet = wb.createSheet(sheetName);
+        wb.setSheetOrder(sheetName, 0);
+
+        IntStream.range(1, wb.getNumberOfSheets())
+                .mapToObj(wb::getSheetAt)
+                .forEachOrdered(sourceSheet -> {
+                    String sheetName1 = sourceSheet.getSheetName();
+                    int newOriginRow = targetSheet.getLastRowNum() + 1;
+                    CellRangeAddress sourceAddress = new CellRangeAddress(
+                            2, sourceSheet.getLastRowNum() - 1,
+                            0, CellUtil.getRow(1, sourceSheet).getLastCellNum());
+                    Cell newOriginCell = CellUtil.getCell(CellUtil.getRow(newOriginRow, targetSheet), 1);
+                    copyCellRange(sourceSheet, sourceAddress, newOriginCell);
+
+                    // 添加汇总的合并单元格
+                    addMergedRegion(targetSheet, new CellRangeAddress(newOriginRow, targetSheet.getLastRowNum(), 0, 0));
+                    // 设置卡板号单元格的值
+                    Cell noCell = CellUtil.getCell(CellUtil.getRow(newOriginRow, targetSheet), 0);
+                    setCellValue(noCell, "Pallet#" + sourceSheet.getSheetName().replace("号", ""));
+                    // 设置居中对齐
+                    CellUtil.setVerticalAlignment(noCell, VerticalAlignment.CENTER);
+                    CellUtil.setAlignment(noCell, HorizontalAlignment.CENTER);
+
+                    setCellBorder(noCell, BorderStyle.THIN);
+                });
+
+        try (FileOutputStream fos = new FileOutputStream("/b.xlsx")) {
+            wb.write(fos);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 根据sourceCell的单元格类型复制值到targetCell
+     *
+     * @param sourceCell 源单元格
+     * @param targetCell 目标单元格
+     */
+    public static void copyCellValue(Cell sourceCell, Cell targetCell) {
+        CellType cellType = sourceCell.getCellType();
+        if (cellType == CellType.NUMERIC) {
+            targetCell.setCellValue(sourceCell.getNumericCellValue());
+        } else if (cellType == CellType.STRING) {
+            targetCell.setCellValue(sourceCell.getStringCellValue());
+        } else if (cellType == CellType.BLANK) {
+            targetCell.setBlank();
+        } else if (cellType == CellType.BOOLEAN) {
+            targetCell.setCellValue(sourceCell.getBooleanCellValue());
+        } else if (cellType == CellType.ERROR) {
+            targetCell.setCellErrorValue(sourceCell.getErrorCellValue());
+        }
+        // 忽略CellType.FORMULA的单元格
     }
 
     /**
@@ -375,7 +513,7 @@ public class ExcelUtil {
      */
     public static void insertSumFormula(Sheet sheet, int formulaRow, int formulaCol, int sumStartRow, int sumEndRow) {
         // 修改公式
-        Cell sumCell = sheet.getRow(formulaRow).getCell(formulaCol);
+        Cell sumCell = CellUtil.getCell(CellUtil.getRow(formulaRow, sheet), formulaCol);
         String startAddress = sheet.getRow(sumStartRow).getCell(formulaCol).getAddress().toString();
         String endAddress = sheet.getRow(sumEndRow).getCell(formulaCol).getAddress().toString();
         String cellFormula = "SUM(" + startAddress + ":" + endAddress + ")";
