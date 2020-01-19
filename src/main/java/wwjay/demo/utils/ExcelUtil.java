@@ -4,7 +4,6 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeUtil;
 import org.apache.poi.ss.util.CellUtil;
-import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -13,7 +12,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -261,43 +259,6 @@ public class ExcelUtil {
                 .forEach(targetSheet::addMergedRegion);
         // 验证合并单元格
         targetSheet.validateMergedRegions();
-    }
-
-    public static void main(String[] args) throws IOException {
-        Workbook wb = WorkbookFactory.create(new File("/卡板明细.xlsx"));
-        // 创建新sheet
-        String sheetName = WorkbookUtil.createSafeSheetName("Summary");
-        Sheet targetSheet = wb.createSheet(sheetName);
-        wb.setSheetOrder(sheetName, 0);
-
-        IntStream.range(1, wb.getNumberOfSheets())
-                .mapToObj(wb::getSheetAt)
-                .forEachOrdered(sourceSheet -> {
-                    String sheetName1 = sourceSheet.getSheetName();
-                    int newOriginRow = targetSheet.getLastRowNum() + 1;
-                    CellRangeAddress sourceAddress = new CellRangeAddress(
-                            2, sourceSheet.getLastRowNum() - 1,
-                            0, CellUtil.getRow(1, sourceSheet).getLastCellNum());
-                    Cell newOriginCell = CellUtil.getCell(CellUtil.getRow(newOriginRow, targetSheet), 1);
-                    copyCellRange(sourceSheet, sourceAddress, newOriginCell);
-
-                    // 添加汇总的合并单元格
-                    addMergedRegion(targetSheet, new CellRangeAddress(newOriginRow, targetSheet.getLastRowNum(), 0, 0));
-                    // 设置卡板号单元格的值
-                    Cell noCell = CellUtil.getCell(CellUtil.getRow(newOriginRow, targetSheet), 0);
-                    setCellValue(noCell, "Pallet#" + sourceSheet.getSheetName().replace("号", ""));
-                    // 设置居中对齐
-                    CellUtil.setVerticalAlignment(noCell, VerticalAlignment.CENTER);
-                    CellUtil.setAlignment(noCell, HorizontalAlignment.CENTER);
-
-                    setCellBorder(noCell, BorderStyle.THIN);
-                });
-
-        try (FileOutputStream fos = new FileOutputStream("/b.xlsx")) {
-            wb.write(fos);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
