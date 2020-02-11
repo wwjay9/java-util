@@ -4,7 +4,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeUtil;
 import org.apache.poi.ss.util.CellUtil;
-import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.lang.Nullable;
@@ -461,6 +461,41 @@ public class ExcelUtil {
             }
         }
         return value != null ? value.trim() : null;
+    }
+
+    /**
+     * 以图片左上角的单元格为基准获取图片
+     *
+     * @param sheet 工作簿
+     * @param row   图片左上角所在行
+     * @param col   图片左上角所在列
+     * @return 图片保存的临时路径
+     */
+    public static List<Path> getCellPicture(XSSFSheet sheet, int row, int col) {
+        XSSFDrawing drawing = sheet.getDrawingPatriarch();
+        if (drawing == null) {
+            return new ArrayList<>();
+        }
+        return drawing.getShapes().stream()
+                .filter(shape -> shape instanceof XSSFPicture)
+                .map(shape -> (XSSFPicture) shape)
+                .filter(picture -> {
+                    XSSFClientAnchor anchor = (XSSFClientAnchor) picture.getAnchor();
+                    // 以左上角单元格为基准
+                    return anchor.getRow1() == row && anchor.getCol1() == col;
+                })
+                .map(picture -> {
+                    XSSFPictureData pictureData = picture.getPictureData();
+                    Path path;
+                    try {
+                        path = Files.createTempFile("excel_img", "." + pictureData.suggestFileExtension());
+                        Files.write(path, pictureData.getData());
+                    } catch (IOException e) {
+                        throw new RuntimeException("保存图片到临时文件失败", e);
+                    }
+                    return path;
+                })
+                .collect(Collectors.toList());
     }
 
     /**
