@@ -32,41 +32,11 @@ public class BeanUtil {
      * @param supplier 新类型生成器
      * @return 新类型List
      */
-    public static <T> List<T> copyList(List<T> source, Supplier<T> supplier) {
+    public static <T, R> List<R> copyList(List<T> source, Supplier<R> supplier) {
         if (source == null) {
             return null;
         }
         return source.stream().map(copyFunction(supplier)).collect(Collectors.toList());
-    }
-
-    /**
-     * 将一个对象拷贝为另一个对象
-     *
-     * @param supplier 新类型生成器
-     * @return 新类型List
-     */
-    public static <T, R> Function<T, R> copyFunction(Supplier<R> supplier) {
-        return copyFunction(supplier, (t, r) -> {
-        });
-    }
-
-    /**
-     * 将一个对象拷贝为另一个对象
-     *
-     * @param supplier 新类型生成器
-     * @param addition 拷贝对象后的额外操作
-     * @return 新类型List
-     */
-    public static <T, R> Function<T, R> copyFunction(Supplier<R> supplier, BiConsumer<T, R> addition) {
-        return t -> {
-            if (t == null) {
-                return null;
-            }
-            R r = supplier.get();
-            BeanUtils.copyProperties(t, r);
-            addition.accept(t, r);
-            return r;
-        };
     }
 
     /**
@@ -109,6 +79,36 @@ public class BeanUtil {
                 .map(FeatureDescriptor::getName)
                 .filter(propertyName -> !Objects.equals(propertyName, "class"))
                 .allMatch(propertyName -> beanWrapper.getPropertyValue(propertyName) == null);
+    }
+
+    /**
+     * 将一个对象拷贝为另一个对象
+     *
+     * @param supplier 新类型生成器
+     * @return 新类型List
+     */
+    private static <T, R> Function<T, R> copyFunction(Supplier<R> supplier) {
+        return copyFunction(supplier, (t, r) -> {
+        });
+    }
+
+    /**
+     * 将一个对象拷贝为另一个对象
+     *
+     * @param supplier 新类型生成器
+     * @param addition 拷贝对象后的额外操作
+     * @return 新类型List
+     */
+    private static <T, R> Function<T, R> copyFunction(Supplier<R> supplier, BiConsumer<T, R> addition) {
+        return t -> {
+            if (t == null) {
+                return null;
+            }
+            R r = supplier.get();
+            BeanUtils.copyProperties(t, r);
+            addition.accept(t, r);
+            return r;
+        };
     }
 
     /**
