@@ -12,6 +12,7 @@ import org.springframework.util.Assert;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.spec.AlgorithmParameterSpec;
@@ -102,7 +103,7 @@ public class MiniProgramUtil {
             // 指定用途，密钥，参数 初始化Cipher对象
             cipher.init(Cipher.DECRYPT_MODE, key, params);
             // 解密数据
-            data = new String(cipher.doFinal(encryptedDataByte));
+            data = new String(cipher.doFinal(encryptedDataByte), StandardCharsets.UTF_8);
         } catch (GeneralSecurityException e) {
             logger.error("解密小程序数据失败", e);
             throw new IllegalArgumentException("数据解析失败");
