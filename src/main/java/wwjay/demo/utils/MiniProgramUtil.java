@@ -155,6 +155,11 @@ public class MiniProgramUtil {
     public static class UserInfo {
 
         /**
+         * 微信openId
+         */
+        private String openId;
+
+        /**
          * 昵称
          */
         private String nickName;
@@ -188,5 +193,10 @@ public class MiniProgramUtil {
          * 显示 country，province，city 所用的语言
          */
         private String language;
+
+        /**
+         * 微信平台ID
+         */
+        private String unionId;
     }
 }
