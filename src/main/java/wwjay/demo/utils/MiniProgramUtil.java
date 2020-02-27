@@ -44,8 +44,9 @@ public class MiniProgramUtil {
      */
     public static JsCode2Session getJsCode2Session(String appId, String secret, String jsCode) {
         String url = HttpUtil.buildUrl(CODE2_SESSION_API, Map.of(
-                "appid", appId, "secret",
-                secret, "js_code", jsCode,
+                "appid", appId,
+                "secret", secret,
+                "js_code", jsCode,
                 "grant_type", "authorization_code"));
         String responseBody = HttpUtil.get(url);
         JSONObject responseJson = JSON.parseObject(responseBody);
