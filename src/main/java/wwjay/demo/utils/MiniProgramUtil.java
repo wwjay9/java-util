@@ -63,6 +63,20 @@ public class MiniProgramUtil {
     }
 
     /**
+     * 小程序前端调用getUserInfo后解密用户信息
+     *
+     * @param appId         小程序appId
+     * @param sessionKey    JsCode2Session的sessionKey
+     * @param encryptedData 加密数据
+     * @param iv            加密算法的初始向量
+     * @return 用户信息
+     */
+    public static UserInfo getUserInfo(String appId, String sessionKey, String encryptedData, String iv) {
+        JSONObject data = decodeData(appId, sessionKey, encryptedData, iv);
+        return data.toJavaObject(UserInfo.class);
+    }
+
+    /**
      * 小程序前端调用getPhoneNumber后解密出手机号
      *
      * @param appId         小程序appId
@@ -133,5 +147,46 @@ public class MiniProgramUtil {
          * 用户在开放平台的唯一标识符
          */
         private String unionId;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class UserInfo {
+
+        /**
+         * 昵称
+         */
+        private String nickName;
+
+        /**
+         * 头像url
+         */
+        private String avatarUrl;
+
+        /**
+         * 性别 0:未知 1:男 2:女
+         */
+        private int gender;
+
+        /**
+         * 用户所在国家
+         */
+        private String country;
+
+        /**
+         * 用户所在省份
+         */
+        private String province;
+
+        /**
+         * 用户所在城市
+         */
+        private String city;
+
+        /**
+         * 显示 country，province，city 所用的语言
+         */
+        private String language;
     }
 }
