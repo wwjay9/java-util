@@ -59,7 +59,7 @@ public class MpUtil {
     public static AccessToken getAccessToken(String appId, String appSecret) {
         // 利用ConcurrentHashMap的并发操作原子性来更新accessToken，确保不会重复更新
         return ACCESS_TOKEN_CACHE.compute(appId, (key, accessToken) ->
-                isTokenValid(accessToken) ? accessToken : requestAccessTokenApi(appId, appSecret));
+                verifyToken(accessToken) ? accessToken : requestAccessTokenApi(appId, appSecret));
 
         // 当使用Redis作为缓存时需要使用DCL（双重检查锁）
         // AccessToken accessToken = ACCESS_TOKEN_CACHE.get(appId);
@@ -84,7 +84,7 @@ public class MpUtil {
      */
     public static JsApiTicket getJsApiTicket(String accessToken) {
         return JSAPI_TICKET_CACHE.compute(accessToken, (key, ticket) ->
-                isTokenValid(ticket) ? ticket : requestJsTicketApi(accessToken));
+                verifyToken(ticket) ? ticket : requestJsTicketApi(accessToken));
     }
 
     /**
@@ -150,7 +150,7 @@ public class MpUtil {
         return responseJson;
     }
 
-    private static <T extends Expired> boolean isTokenValid(T token) {
+    private static <T extends Expired> boolean verifyToken(T token) {
         return token != null && !token.isExpired();
     }
 
