@@ -39,7 +39,7 @@ import java.util.*;
  *
  * @author wwj
  */
-@SuppressWarnings({"unused", "WeakerAccess", "AlibabaLowerCamelCaseVariableNaming"})
+@SuppressWarnings({"unused", "WeakerAccess", "AlibabaLowerCamelCaseVariableNaming", "SpellCheckingInspection"})
 public class WeChatPayUtil {
 
     public static final String APP_ID = "appid";
@@ -98,7 +98,7 @@ public class WeChatPayUtil {
     /**
      * 请求jsApi统一下单接口
      *
-     * @param appId          微信支付分配的公众账号ID（企业号corpid即为此appId）
+     * @param appId          微信支付分配的公众账号ID（企业号corpId即为此appId）
      * @param key            key
      * @param mchId          微信支付分配的商户号
      * @param body           商品描述
@@ -279,10 +279,10 @@ public class WeChatPayUtil {
      */
     private static String digest(String text, String key) {
         try {
-            Mac hmacSHA256 = Mac.getInstance("HmacSHA256");
+            Mac hmacSha256 = Mac.getInstance("HmacSHA256");
             SecretKeySpec secretKeySpec = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-            hmacSHA256.init(secretKeySpec);
-            byte[] bytes = hmacSHA256.doFinal(text.getBytes(StandardCharsets.UTF_8));
+            hmacSha256.init(secretKeySpec);
+            byte[] bytes = hmacSha256.doFinal(text.getBytes(StandardCharsets.UTF_8));
             return new String(Hex.encode(bytes));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new IllegalArgumentException(e);
@@ -342,7 +342,7 @@ public class WeChatPayUtil {
      * @param password 证书密码
      * @return SSLContext
      */
-    private static SSLContext createSSLContext(InputStream p12File, String password) {
+    private static SSLContext createSslContext(InputStream p12File, String password) {
         SSLContext sc;
         try {
             KeyStore ks = KeyStore.getInstance("PKCS12");

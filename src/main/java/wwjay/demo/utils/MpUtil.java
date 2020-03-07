@@ -28,9 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings({"SpellCheckingInspection", "unused"})
 public class MpUtil {
 
-    private MpUtil() {
-    }
-
     private static final Logger logger = LoggerFactory.getLogger(MpUtil.class);
     /**
      * 获取公众号AccessToken的Api
@@ -48,6 +45,9 @@ public class MpUtil {
      * JsapiTicket缓存，正式使用时可存放在Redis，并设置过期时间
      */
     private static final ConcurrentHashMap<String, JsApiTicket> JSAPI_TICKET_CACHE = new ConcurrentHashMap<>();
+
+    private MpUtil() {
+    }
 
     /**
      * 获取微信公众号全局接口调用凭证AccessToken，AccessToken应该由此工具类统一管理

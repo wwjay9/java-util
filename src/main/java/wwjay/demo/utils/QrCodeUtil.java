@@ -104,7 +104,7 @@ public class QrCodeUtil {
      *
      * @param text             二维码文本
      * @param size             二维码大小
-     * @param resourceFilePath 背景图在CalssPath Resource中的路径
+     * @param resourceFilePath 背景图在ClassPath Resource中的路径
      * @param x                二维码偏移量
      * @param y                二维码偏移量
      * @return BufferedImage
