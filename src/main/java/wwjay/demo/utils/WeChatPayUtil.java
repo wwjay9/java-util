@@ -99,8 +99,8 @@ public class WeChatPayUtil {
      * 请求jsApi统一下单接口
      *
      * @param appId          微信支付分配的公众账号ID（企业号corpId即为此appId）
-     * @param key            key
      * @param mchId          微信支付分配的商户号
+     * @param key            微信支付key
      * @param body           商品描述
      * @param outTradeNo     商户订单号
      * @param totalFee       订单总金额，单位为分
@@ -109,9 +109,9 @@ public class WeChatPayUtil {
      * @param openId         用户标识
      * @return 返回前端JS调用微信支付的请求参数列表
      */
-    public static Map<String, String> jsApiPay(String appId, String key, String mchId, String body, String outTradeNo,
+    public static Map<String, String> jsApiPay(String appId, String mchId, String key, String body, String outTradeNo,
                                                int totalFee, String spBillCreateIp, String notifyUrl, String openId) {
-        String bodyXml = generateUnifiedOrderXml(appId, key, mchId, body, outTradeNo,
+        String bodyXml = generateUnifiedOrderXml(appId, mchId, key, body, outTradeNo,
                 totalFee, spBillCreateIp, notifyUrl, TradeType.JSAPI, null, openId);
         Map<String, String> responseMap = unifiedOrderRequest(bodyXml, key);
         String prepayId = responseMap.get(PREPAY_ID);
@@ -130,8 +130,8 @@ public class WeChatPayUtil {
      * 请求Native统一下单接口
      *
      * @param appId          微信支付分配的公众账号ID
-     * @param key            key
      * @param mchId          微信支付分配的商户号
+     * @param key            微信支付key
      * @param body           商品描述
      * @param outTradeNo     商户订单号
      * @param totalFee       订单总金额，单位为分
@@ -140,9 +140,9 @@ public class WeChatPayUtil {
      * @param productId      商品ID
      * @return 返回二维码链接
      */
-    public static String nativePay(String appId, String key, String mchId, String body, String outTradeNo,
+    public static String nativePay(String appId, String mchId, String key, String body, String outTradeNo,
                                    int totalFee, String spBillCreateIp, String notifyUrl, String productId) {
-        String bodyXml = generateUnifiedOrderXml(appId, key, mchId, body, outTradeNo,
+        String bodyXml = generateUnifiedOrderXml(appId, mchId, key, body, outTradeNo,
                 totalFee, spBillCreateIp, notifyUrl, TradeType.NATIVE, productId, null);
         Map<String, String> responseMap = unifiedOrderRequest(bodyXml, key);
         return responseMap.get(CODE_URL);
@@ -193,8 +193,8 @@ public class WeChatPayUtil {
      * 生成统一订单接口的请求xml
      *
      * @param appId          微信支付分配的公众账号ID（企业号corpid即为此appId）
-     * @param key            key
      * @param mchId          微信支付分配的商户号
+     * @param key            微信支付key
      * @param body           商品描述
      * @param outTradeNo     商户订单号
      * @param totalFee       订单总金额，单位为分
@@ -205,12 +205,12 @@ public class WeChatPayUtil {
      * @param openId         用户标识，trade_type=JSAPI时（即JSAPI支付），此参数必传
      * @return 订单请求的xml
      */
-    private static String generateUnifiedOrderXml(String appId, String key, String mchId, String body, String outTradeNo,
+    private static String generateUnifiedOrderXml(String appId, String mchId, String key, String body, String outTradeNo,
                                                   int totalFee, String spBillCreateIp, String notifyUrl,
                                                   TradeType tradeType, String productId, String openId) {
         Assert.hasText(appId, "appId不能为空值");
-        Assert.hasText(key, "key不能为空值");
         Assert.hasText(mchId, "mchId不能为空值");
+        Assert.hasText(key, "key不能为空值");
         Assert.hasText(body, "body不能为空值");
         Assert.hasText(outTradeNo, "outTradeNo不能为空值");
         Assert.isTrue(totalFee > 0, "totalFee必须大于0");
