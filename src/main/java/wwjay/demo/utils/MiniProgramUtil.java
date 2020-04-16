@@ -25,7 +25,7 @@ import java.util.Objects;
  *
  * @author wwj
  */
-@SuppressWarnings({"SpellCheckingInspection", "unused"})
+@SuppressWarnings({"unused"})
 public class MiniProgramUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(MiniProgramUtil.class);

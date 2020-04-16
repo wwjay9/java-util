@@ -261,7 +261,6 @@ public class ZipUtil {
     /**
      * 解压gzip格式数据
      */
-    @SuppressWarnings("DuplicatedCode")
     public static String gunzip(byte[] bytes) {
         if (bytes.length <= 0) {
             return null;

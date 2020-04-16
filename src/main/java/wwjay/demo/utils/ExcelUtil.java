@@ -96,7 +96,6 @@ public class ExcelUtil {
     public static Path writeToTempFile(Workbook workbook) {
         Path excelFilePath;
         try {
-            //noinspection SpellCheckingInspection
             excelFilePath = Files.createTempFile("excel", ".xlsx");
         } catch (IOException e) {
             throw new RuntimeException("创建临时文件失败", e);
@@ -640,9 +639,9 @@ public class ExcelUtil {
 
     private static class ColumnProperty {
 
-        private String fieldName;
-        private String headerName;
-        private short colWidth;
+        private final String fieldName;
+        private final String headerName;
+        private final short colWidth;
 
         private ColumnProperty(String fieldName, String headerName, short colWidth) {
             Assert.isTrue(colWidth < 255, "列宽最大不能超过255个字符");

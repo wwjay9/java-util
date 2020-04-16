@@ -272,7 +272,6 @@ public class HttpUtil {
     /**
      * 解压gzip
      */
-    @SuppressWarnings("DuplicatedCode")
     public static String gunzip(byte[] bytes) {
         if (bytes.length <= 0) {
             return null;

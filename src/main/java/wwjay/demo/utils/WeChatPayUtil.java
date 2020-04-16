@@ -39,7 +39,7 @@ import java.util.*;
  *
  * @author wwj
  */
-@SuppressWarnings({"unused", "WeakerAccess", "AlibabaLowerCamelCaseVariableNaming", "SpellCheckingInspection"})
+@SuppressWarnings("unused")
 public class WeChatPayUtil {
 
     public static final String APP_ID = "appid";
