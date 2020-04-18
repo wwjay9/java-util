@@ -290,6 +290,8 @@ public class ZipUtil {
 
     public static class ZipException extends RuntimeException {
 
+        private static final long serialVersionUID = 3939639697866528050L;
+
         public ZipException(String message) {
             super(message);
         }
