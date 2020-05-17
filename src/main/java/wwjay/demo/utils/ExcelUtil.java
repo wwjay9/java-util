@@ -212,6 +212,16 @@ public class ExcelUtil {
     }
 
     /**
+     * 设置单元格的背景色
+     *
+     * @param cell  单元格
+     * @param color 背景色
+     */
+    public static void setCellBackgroundColor(Cell cell, IndexedColors color) {
+        CellUtil.setCellStyleProperty(cell, CellUtil.FILL_FOREGROUND_COLOR, color.getIndex());
+    }
+
+    /**
      * 将选中的单元格复制到指定的位置
      *
      * @param sourceSheet      源工作表
