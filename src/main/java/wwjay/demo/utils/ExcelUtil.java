@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -195,6 +196,54 @@ public class ExcelUtil {
         if (cra.getFirstRow() < cra.getLastRow() || cra.getFirstColumn() < cra.getLastColumn()) {
             sheet.addMergedRegion(cra);
         }
+    }
+
+    /**
+     * 当{@code sameCols}列的的值完全相同，并且都属于同一个{@code mergedCol}列时，执行{@code accumulators}的合并逻辑，
+     * 合并的修改直接在原工作簿上操作
+     *
+     * @param sheet        工作簿
+     * @param startRow     开始行
+     * @param mergedCol    合并单元格的列
+     * @param sameCols     相同值的列
+     * @param accumulators 合并的累加器，Map<'操作的列', BiConsumer<'累计值的单元格', '当前值'>>
+     */
+    public static void mergedRegionReduce(Sheet sheet, int startRow, int mergedCol, List<Integer> sameCols,
+                                          Map<Integer, BiConsumer<Cell, Cell>> accumulators) {
+        sheet.getMergedRegions().stream()
+                .filter(mr -> Objects.equals(mr.getFirstColumn(), mergedCol))
+                .filter(mr -> mr.getFirstRow() < mr.getLastRow())
+                .forEach(mr -> IntStream.rangeClosed(mr.getFirstRow(), mr.getLastRow())
+                        .mapToObj(sheet::getRow)
+                        .filter(Objects::nonNull)
+                        // 将sameCols单元格值拼接后进行分组
+                        .collect(Collectors.groupingBy(
+                                row -> sameCols.stream()
+                                        .map(row::getCell)
+                                        .map(ExcelUtil::getCellValue)
+                                        .filter(Objects::nonNull)
+                                        .collect(Collectors.joining("-"))))
+                        .values()
+                        .stream()
+                        // 取出符合合并条件的行
+                        .filter(list -> list.size() > 1)
+                        .forEach(rows -> {
+                            Row firstRow = rows.remove(0);
+                            rows.forEach(row -> {
+                                accumulators.forEach((accumulatorCol, accumulator) ->
+                                        accumulator.accept(CellUtil.getCell(firstRow, accumulatorCol),
+                                                CellUtil.getCell(row, accumulatorCol)));
+                                // 执行完合并以后删除行
+                                sheet.removeRow(row);
+                            });
+                        }));
+        // 调用sheet.removeRow后会留下空行
+        IntStream.range(startRow, sheet.getLastRowNum())
+                .forEach(i -> {
+                    if (sheet.getRow(i) == null) {
+                        remove(sheet, i);
+                    }
+                });
     }
 
     /**
