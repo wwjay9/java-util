@@ -211,7 +211,9 @@ public class ExcelUtil {
     public static void mergedRegionReduce(Sheet sheet, int startRow, int mergedCol, List<Integer> sameCols,
                                           Map<Integer, BiConsumer<Cell, Cell>> accumulators) {
         sheet.getMergedRegions().stream()
+                // 找出第mergedCol列的合并单元格
                 .filter(mr -> Objects.equals(mr.getFirstColumn(), mergedCol))
+                // 过滤出有多行的的合并单元格
                 .filter(mr -> mr.getFirstRow() < mr.getLastRow())
                 .forEach(mr -> IntStream.rangeClosed(mr.getFirstRow(), mr.getLastRow())
                         .mapToObj(sheet::getRow)
@@ -222,6 +224,7 @@ public class ExcelUtil {
                                         .map(row::getCell)
                                         .map(ExcelUtil::getCellValue)
                                         .filter(Objects::nonNull)
+                                        // 用"-"来拼接多个单元格的值，识别多个单元格的组合是否相同
                                         .collect(Collectors.joining("-"))))
                         .values()
                         .stream()
@@ -233,17 +236,10 @@ public class ExcelUtil {
                                 accumulators.forEach((accumulatorCol, accumulator) ->
                                         accumulator.accept(CellUtil.getCell(firstRow, accumulatorCol),
                                                 CellUtil.getCell(row, accumulatorCol)));
-                                // 执行完合并以后删除行
+                                // FIXME 执行完合并以后删除行，但是这里删除只是删除行的内容，生成后的表格需要手动删除
                                 sheet.removeRow(row);
                             });
                         }));
-        // 调用sheet.removeRow后会留下空行
-        IntStream.range(startRow, sheet.getLastRowNum())
-                .forEach(i -> {
-                    if (sheet.getRow(i) == null) {
-                        remove(sheet, i);
-                    }
-                });
     }
 
     /**
@@ -388,9 +384,12 @@ public class ExcelUtil {
      * @param sheet    工作表
      * @param startRow 开始行
      * @param endRow   结束行
+     * @deprecated 未经过严格测试，当遇到合并单元格时有未知bug
      */
+    @Deprecated
     public static void remove(Sheet sheet, int startRow, int endRow) {
         Assert.isTrue(endRow >= startRow, "结束行必须大于等于开始行");
+        // FIXME 删除行以后，原来的行索引会发生变化
         IntStream.rangeClosed(startRow, endRow).forEachOrdered(i -> remove(sheet, startRow));
     }
 
@@ -399,8 +398,11 @@ public class ExcelUtil {
      *
      * @param sheet    工作表
      * @param rowIndex 行索引
+     * @deprecated 未经过严格测试，当遇到合并单元格时有未知bug
      */
+    @Deprecated
     public static void remove(Sheet sheet, int rowIndex) {
+        // FIXME 删除的行包含合并单元格时，合并的单元格会被拆分
         int lastRow = sheet.getLastRowNum();
         if (rowIndex >= 0 && rowIndex < lastRow) {
             sheet.shiftRows(rowIndex + 1, lastRow, -1);
