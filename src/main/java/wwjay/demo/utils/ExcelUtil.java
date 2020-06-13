@@ -12,10 +12,12 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -390,7 +392,7 @@ public class ExcelUtil {
     public static void remove(Sheet sheet, int startRow, int endRow) {
         Assert.isTrue(endRow >= startRow, "结束行必须大于等于开始行");
         // FIXME 删除行以后，原来的行索引会发生变化
-        IntStream.rangeClosed(startRow, endRow).forEachOrdered(i -> remove(sheet, startRow));
+        // IntStream.rangeClosed(startRow, endRow).forEachOrdered(i -> remove(sheet, startRow));
     }
 
     /**
@@ -401,17 +403,49 @@ public class ExcelUtil {
      * @deprecated 未经过严格测试，当遇到合并单元格时有未知bug
      */
     @Deprecated
-    public static void remove(Sheet sheet, int rowIndex) {
+    public static void remove(Row row) {
         // FIXME 删除的行包含合并单元格时，合并的单元格会被拆分
+        int rowIndex = row.getRowNum();
+        Sheet sheet = row.getSheet();
         int lastRow = sheet.getLastRowNum();
         if (rowIndex >= 0 && rowIndex < lastRow) {
             sheet.shiftRows(rowIndex + 1, lastRow, -1);
+
+            List<Integer> removeMergedRegions = new ArrayList<>();
+            List<CellRangeAddress> addMergedRegions = new ArrayList<>();
+
+            IntStream.range(0, sheet.getNumMergedRegions())
+                    .forEach(i -> {
+                        CellRangeAddress mr = sheet.getMergedRegion(i);
+                        if (!mr.containsRow(rowIndex)) {
+                            return;
+                        }
+                        removeMergedRegions.add(i);
+                        mr.setLastRow(mr.getLastRow() - 1);
+                        // 缩减以后变成单个单元格则删除合并单元格
+                        if (mr.getLastColumn() > mr.getFirstColumn() || mr.getLastRow() > mr.getFirstRow()) {
+                            addMergedRegions.add(mr);
+                        }
+                    });
+            sheet.removeMergedRegions(removeMergedRegions);
+            addMergedRegions.forEach(sheet::addMergedRegion);
+            sheet.validateMergedRegions();
         }
         if (rowIndex == lastRow) {
             Row removingRow = sheet.getRow(rowIndex);
             if (removingRow != null) {
                 sheet.removeRow(removingRow);
             }
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        Files.copy(Path.of("/1.xlsx"), Path.of("/2.xlsx"), StandardCopyOption.REPLACE_EXISTING);
+        try (Workbook workbook = WorkbookFactory.create(new File("/2.xlsx"))) {
+            Sheet sheet = workbook.getSheetAt(0);
+            Row row = sheet.getRow(4);
+            remove(row);
+            workbook.write(new FileOutputStream("/3.xlsx"));
         }
     }
 
