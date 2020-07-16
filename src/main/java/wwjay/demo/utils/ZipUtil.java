@@ -194,6 +194,7 @@ public class ZipUtil {
 
     /**
      * 将zip包中包含指定扩展名的文件解压到指定路径
+     * FIXME 由于压缩工具的不同，压缩包的编码可能为操作系统的默认编码，导致压缩包中有中文文件名时报java.lang.IllegalArgumentException: MALFORMED[1]错误
      *
      * @param zipFile   zip文件
      * @param target    解压的目标路径
