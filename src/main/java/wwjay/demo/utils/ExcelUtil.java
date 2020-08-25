@@ -12,10 +12,12 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -387,7 +389,64 @@ public class ExcelUtil {
      */
     public static void remove(Sheet sheet, int startRow, int endRow) {
         Assert.isTrue(endRow >= startRow, "结束行必须大于等于开始行");
-        // FIXME 待完成
+        int lastRowNum = sheet.getLastRowNum();
+        endRow = Math.min(endRow, lastRowNum);
+        int removeRowCount = endRow - startRow + 1;
+
+        // 调整删除区域内的合并单元格
+        short zero = 0;
+        int maxRemoveCol = Math.max(Optional.ofNullable(sheet.getRow(startRow))
+                        .map(Row::getLastCellNum)
+                        .orElse(zero),
+                Optional.ofNullable(sheet.getRow(endRow))
+                        .map(Row::getLastCellNum)
+                        .orElse(zero));
+        CellRangeAddress removeRange = new CellRangeAddress(startRow, endRow, 0, maxRemoveCol);
+        List<CellRangeAddress> updateMr = new ArrayList<>();
+        List<Integer> removeMr = new ArrayList<>();
+        IntStream.range(0, sheet.getNumMergedRegions())
+                .forEach(i -> {
+                    CellRangeAddress mr = sheet.getMergedRegion(i);
+                    if (mr.getLastRow() < removeRange.getFirstRow() || mr.getFirstRow() > removeRange.getLastRow()) {
+                        return;
+                    }
+                    removeMr.add(i);
+                    // 合并单元格包含在删除的区域内时删除
+                    if (mr.getFirstRow() >= removeRange.getFirstRow() && mr.getLastRow() <= removeRange.getLastRow()) {
+                        return;
+                    }
+                    // 否则调整合并单元格的大小
+                    if (mr.getFirstRow() < removeRange.getFirstRow() && mr.getLastRow() > removeRange.getLastRow()) {
+                        mr.setLastRow(mr.getLastRow() - removeRowCount);
+                    }
+                    if (mr.getFirstRow() < removeRange.getFirstRow() && mr.getLastRow() < removeRange.getLastRow()) {
+                        mr.setLastRow(removeRange.getFirstRow() - 1);
+                    }
+                    if (mr.getFirstRow() > removeRange.getFirstRow() && mr.getLastRow() > removeRange.getLastRow()) {
+                        mr.setFirstRow(removeRange.getFirstRow());
+                        mr.setLastRow(mr.getFirstRow() + mr.getLastRow() - removeRange.getLastRow());
+                    }
+                    if (mr.getLastRow() > mr.getFirstRow() || mr.getLastColumn() > mr.getFirstColumn()) {
+                        updateMr.add(mr);
+                    }
+                });
+
+        if (endRow >= lastRowNum) {
+            sheet.shiftRows(lastRowNum + 1, lastRowNum + removeRowCount, -removeRowCount);
+        } else {
+            sheet.shiftRows(endRow + 1, lastRowNum, -removeRowCount);
+        }
+        sheet.removeMergedRegions(removeMr);
+        updateMr.forEach(sheet::addMergedRegion);
+    }
+
+    public static void main(String[] args) throws IOException {
+        Files.copy(Path.of("/1.xlsx"), Path.of("/2.xlsx"), StandardCopyOption.REPLACE_EXISTING);
+        try (Workbook workbook = WorkbookFactory.create(new File("/2.xlsx"))) {
+            Sheet sheet = workbook.getSheetAt(0);
+            remove(sheet, 3, 4);
+            workbook.write(new FileOutputStream("/3.xlsx"));
+        }
     }
 
     /**
