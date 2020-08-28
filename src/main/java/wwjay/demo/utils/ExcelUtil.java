@@ -12,12 +12,10 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -386,125 +384,28 @@ public class ExcelUtil {
      * @param sheet    工作表
      * @param startRow 开始行
      * @param endRow   结束行
+     * @deprecated 未经过严格测试，当遇到合并单元格时有未知bug
      */
+    @Deprecated
     public static void remove(Sheet sheet, int startRow, int endRow) {
         Assert.isTrue(endRow >= startRow, "结束行必须大于等于开始行");
-        int lastRowNum = sheet.getLastRowNum();
-        endRow = Math.min(endRow, lastRowNum);
-        int removeRowCount = endRow - startRow + 1;
-
-        // 调整删除区域内的合并单元格
-        short zero = 0;
-        int maxRemoveCol = Math.max(Optional.ofNullable(sheet.getRow(startRow))
-                        .map(Row::getLastCellNum)
-                        .orElse(zero),
-                Optional.ofNullable(sheet.getRow(endRow))
-                        .map(Row::getLastCellNum)
-                        .orElse(zero));
-        CellRangeAddress removeRange = new CellRangeAddress(startRow, endRow, 0, maxRemoveCol);
-        List<CellRangeAddress> updateMr = new ArrayList<>();
-        List<Integer> removeMr = new ArrayList<>();
-        IntStream.range(0, sheet.getNumMergedRegions())
-                .forEach(i -> {
-                    CellRangeAddress mr = sheet.getMergedRegion(i);
-                    if (mr.getLastRow() < removeRange.getFirstRow() || mr.getFirstRow() > removeRange.getLastRow()) {
-                        return;
-                    }
-                    removeMr.add(i);
-                    // 合并单元格包含在删除的区域内时删除
-                    if (mr.getFirstRow() >= removeRange.getFirstRow() && mr.getLastRow() <= removeRange.getLastRow()) {
-                        return;
-                    }
-                    // 否则调整合并单元格的大小
-                    if (mr.getFirstRow() < removeRange.getFirstRow() && mr.getLastRow() > removeRange.getLastRow()) {
-                        mr.setLastRow(mr.getLastRow() - removeRowCount);
-                    }
-                    if (mr.getFirstRow() < removeRange.getFirstRow() && mr.getLastRow() < removeRange.getLastRow()) {
-                        mr.setLastRow(removeRange.getFirstRow() - 1);
-                    }
-                    if (mr.getFirstRow() > removeRange.getFirstRow() && mr.getLastRow() > removeRange.getLastRow()) {
-                        mr.setFirstRow(removeRange.getFirstRow());
-                        mr.setLastRow(mr.getFirstRow() + mr.getLastRow() - removeRange.getLastRow());
-                    }
-                    if (mr.getLastRow() > mr.getFirstRow() || mr.getLastColumn() > mr.getFirstColumn()) {
-                        updateMr.add(mr);
-                    }
-                });
-
-        if (endRow >= lastRowNum) {
-            sheet.shiftRows(lastRowNum + 1, lastRowNum + removeRowCount, -removeRowCount);
-        } else {
-            sheet.shiftRows(endRow + 1, lastRowNum, -removeRowCount);
-        }
-        sheet.removeMergedRegions(removeMr);
-        updateMr.forEach(sheet::addMergedRegion);
-    }
-
-    public static void main(String[] args) throws IOException {
-        Files.copy(Path.of("/1.xlsx"), Path.of("/2.xlsx"), StandardCopyOption.REPLACE_EXISTING);
-        try (Workbook workbook = WorkbookFactory.create(new File("/2.xlsx"))) {
-            Sheet sheet = workbook.getSheetAt(0);
-            remove(sheet, 3, 4);
-            workbook.write(new FileOutputStream("/3.xlsx"));
-        }
+        // FIXME 删除行以后，原来的行索引会发生变化
+        IntStream.rangeClosed(startRow, endRow).forEachOrdered(i -> remove(sheet, startRow));
     }
 
     /**
-     * 从工作表中删除指定的行，此方法修复sheet.shiftRows删除行时会拆分合并的单元格的问题
+     * 从工作表中删除指定的行
      *
-     * @param sheet 工作表
-     * @param row   需要删除的行索引
+     * @param sheet    工作表
+     * @param rowIndex 行索引
+     * @deprecated 未经过严格测试，当遇到合并单元格时有未知bug
      */
-    public static void remove(Sheet sheet, int row) {
-        Assert.notNull(sheet, "sheet不能为空");
-        remove(sheet.getRow(row));
-    }
-
-    /**
-     * 从工作表中删除指定的行，此方法修复sheet.shiftRows删除行时会拆分合并的单元格的问题
-     *
-     * @param row 需要删除的行
-     * @see <a href="https://bz.apache.org/bugzilla/show_bug.cgi?id=56454">sheet.shiftRows的bug</a>
-     */
-    public static void remove(Row row) {
-        if (row == null) {
-            return;
-        }
-        int rowIndex = row.getRowNum();
-        Sheet sheet = row.getSheet();
+    @Deprecated
+    public static void remove(Sheet sheet, int rowIndex) {
+        // FIXME 删除的行包含合并单元格时，合并的单元格会被拆分
         int lastRow = sheet.getLastRowNum();
         if (rowIndex >= 0 && rowIndex < lastRow) {
-            List<CellRangeAddress> updateMergedRegions = new ArrayList<>();
-            // 找出需要调整的合并单元格
-            IntStream.range(0, sheet.getNumMergedRegions())
-                    .forEach(i -> {
-                        CellRangeAddress mr = sheet.getMergedRegion(i);
-                        if (!mr.containsRow(rowIndex)) {
-                            return;
-                        }
-                        // 缩减以后变成单个单元格则删除合并单元格
-                        if (mr.getFirstRow() == mr.getLastRow() - 1 && mr.getFirstColumn() == mr.getLastColumn()) {
-                            return;
-                        }
-                        updateMergedRegions.add(mr);
-                    });
-
-            // 将行上移
             sheet.shiftRows(rowIndex + 1, lastRow, -1);
-
-            // 找出删除行所在的合并单元格
-            List<Integer> removeMergedRegions = IntStream.range(0, sheet.getNumMergedRegions())
-                    .filter(i -> updateMergedRegions.stream().
-                            anyMatch(umr -> CellRangeUtil.contains(umr, sheet.getMergedRegion(i))))
-                    .boxed()
-                    .collect(Collectors.toList());
-
-            sheet.removeMergedRegions(removeMergedRegions);
-            updateMergedRegions.forEach(mr -> {
-                mr.setLastRow(mr.getLastRow() - 1);
-                sheet.addMergedRegion(mr);
-            });
-            sheet.validateMergedRegions();
         }
         if (rowIndex == lastRow) {
             Row removingRow = sheet.getRow(rowIndex);
