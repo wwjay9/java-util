@@ -1,5 +1,7 @@
 package wwjay.demo.utils;
 
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
@@ -9,8 +11,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.*;
 
 /**
@@ -194,39 +196,48 @@ public class ZipUtil {
 
     /**
      * 将zip包中包含指定扩展名的文件解压到指定路径
-     * FIXME 由于压缩工具的不同，压缩包的编码可能为操作系统的默认编码，导致压缩包中有中文文件名时报java.lang.IllegalArgumentException: MALFORMED[1]错误
+     * FIXME 由于压缩工具的不同，压缩包的编码可能为操作系统的默认编码，导致压缩包路径中有中文时报java.nio.charset.MalformedInputException异常
      *
-     * @param zipFile   zip文件
+     * @param zipPath   zip文件
      * @param target    解压的目标路径
      * @param extension 需要解压的文件扩展名，如 git, jpg
      */
-    public static void unzip(final Path zipFile, final Path target, String... extension) {
-        isValid(zipFile);
+    public static void unzip(final Path zipPath, final Path target, String... extension) {
+        isValid(zipPath);
+        Set<String> extensionSet = Set.of(extension)
+                .stream()
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
 
-        try (FileSystem fs = FileSystems.newFileSystem(zipFile, null)) {
-            for (Path root : fs.getRootDirectories()) {
-                Files.walk(root).forEach(path -> {
-                    try {
-                        Path zipElementPath = Paths.get(target.toString(), path.toString());
-                        if (Files.isDirectory(path)) {
-                            Files.createDirectories(zipElementPath);
-                        } else {
-                            if (extension != null && extension.length > 0) {
-                                if (Stream.of(extension)
-                                        .noneMatch(s ->
-                                                Objects.equals(StringUtils.getFilenameExtension(path.toString()), s))) {
-                                    // 跳过不是指定扩展名的文件
-                                    return;
-                                }
+        try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
+            zipFile.stream()
+                    // 过滤指定扩展名的文件
+                    .filter(zipEntry -> {
+                        String extensionName = StringUtils.getFilenameExtension(zipEntry.getName());
+                        return CollectionUtils.isEmpty(extensionSet) ||
+                                !StringUtils.hasText(extensionName) ||
+                                extensionSet.contains(extensionName.toLowerCase());
+                    })
+                    // 防止被恶意构造的zip文件进行覆盖文件攻击，https://snyk.io/research/zip-slip-vulnerability
+                    .peek(zipEntry -> {
+                        Path zipElementPath = Paths.get(target.toString(), zipEntry.getName());
+                        Assert.isTrue(zipElementPath.normalize().startsWith(target.normalize()),
+                                "解压的文件在目标文件夹之外: " + zipEntry.getName());
+                    })
+                    .forEach(zipEntry -> {
+                        Path zipElementPath = Paths.get(target.toString(), zipEntry.getName());
+                        try {
+                            if (zipEntry.isDirectory()) {
+                                Files.createDirectories(zipElementPath);
+                            } else {
+                                Files.createDirectories(zipElementPath.getParent());
+                                // 如果目标文件已经存在则覆盖
+                                Files.copy(zipFile.getInputStream(zipEntry), zipElementPath, StandardCopyOption.REPLACE_EXISTING);
                             }
-                            // 如果目标文件已经存在则覆盖
-                            Files.copy(path, zipElementPath, StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e) {
+                            throw new ZipException("解压文件失败:", e);
                         }
-                    } catch (IOException e) {
-                        throw new ZipException("解压文件失败:", e);
-                    }
-                });
-            }
+                    });
         } catch (IOException e) {
             throw new ZipException("解压文件失败:", e);
         }
