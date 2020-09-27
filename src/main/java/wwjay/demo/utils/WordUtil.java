@@ -60,11 +60,11 @@ public class WordUtil {
     private static List<int[]> getPlaceholderRange(XWPFParagraph paragraph, String placeholder) {
         String paragraphText = paragraph.getText();
         if (paragraphText == null || !paragraphText.contains(placeholder)) {
-            return null;
+            return new ArrayList<>();
         }
         List<XWPFRun> runs = paragraph.getRuns();
         if (CollectionUtils.isEmpty(runs)) {
-            return null;
+            return new ArrayList<>();
         }
         List<int[]> list = new ArrayList<>();
         Integer start = null;

@@ -65,7 +65,7 @@ public class QrCodeUtil {
         try {
             MatrixToImageWriter.writeToPath(bitMatrix, format, path);
         } catch (IOException e) {
-            throw new RuntimeException("保存二维码图片出错", e);
+            throw new IllegalArgumentException("保存二维码图片出错", e);
         }
         Assert.isTrue(Files.isRegularFile(path), "未能检测到生成的文件");
         return path;
@@ -95,7 +95,7 @@ public class QrCodeUtil {
         try {
             MatrixToImageWriter.writeToStream(bitMatrix, DEFAULT_FORMAT, outputStream);
         } catch (IOException e) {
-            throw new RuntimeException("将二维码写出输出流失败", e);
+            throw new IllegalArgumentException("将二维码写出输出流失败", e);
         }
     }
 
@@ -203,7 +203,7 @@ public class QrCodeUtil {
         try {
             return new QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, width, height, hintMap);
         } catch (WriterException e) {
-            throw new RuntimeException("二维码生成错误", e);
+            throw new IllegalArgumentException("二维码生成错误", e);
         }
     }
 

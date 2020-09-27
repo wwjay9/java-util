@@ -1,8 +1,6 @@
 package wwjay.demo.utils;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -41,7 +39,6 @@ import java.util.zip.GZIPInputStream;
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class HttpUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(HttpUtil.class);
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final String APPLICATION_JSON_UTF8_VALUE = "application/json;charset=UTF-8";
 
@@ -138,8 +135,9 @@ public class HttpUtil {
      *
      * @param url 请求地址
      * @return 请求成功后返回的数据
+     * @throws RestClientException 网络异常
      */
-    public static String get(String url) throws RestClientException {
+    public static String get(String url) {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .GET()
                 .build();
@@ -153,8 +151,9 @@ public class HttpUtil {
      * @param password Basic认证的密码
      * @param url      请求地址
      * @return 请求成功后返回的数据
+     * @throws RestClientException 网络异常
      */
-    public static String get(String username, String password, String url) throws RestClientException {
+    public static String get(String username, String password, String url) {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .header(HttpHeaders.AUTHORIZATION, basicEncoder(username, password))
                 .GET()
@@ -168,8 +167,9 @@ public class HttpUtil {
      * @param url         请求地址
      * @param requestJson 请求json
      * @return 请求成功后返回的数据
+     * @throws RestClientException 网络异常
      */
-    public static String post(String url, String requestJson) throws RestClientException {
+    public static String post(String url, String requestJson) {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .header(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_UTF8_VALUE)
                 .POST(HttpRequest.BodyPublishers.ofString(requestJson))
@@ -183,8 +183,9 @@ public class HttpUtil {
      * @param url      请求地址
      * @param formData 请求formData数据
      * @return 请求成功后返回的数据
+     * @throws RestClientException 网络异常
      */
-    public static String post(String url, Map<String, String> formData) throws RestClientException {
+    public static String post(String url, Map<String, String> formData) {
         return send(formUrlencodedRequest(url, formData));
     }
 
@@ -196,8 +197,9 @@ public class HttpUtil {
      * @param url         请求地址
      * @param requestJson 请求json
      * @return 请求成功后返回的数据
+     * @throws RestClientException 网络异常
      */
-    public static String post(String username, String password, String url, String requestJson) throws RestClientException {
+    public static String post(String username, String password, String url, String requestJson) {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .header(HttpHeaders.AUTHORIZATION, basicEncoder(username, password))
                 .header(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_UTF8_VALUE)
@@ -211,8 +213,9 @@ public class HttpUtil {
      *
      * @param request HTTP请求
      * @return 请求成功返回的结果
+     * @throws RestClientException 网络异常
      */
-    public static String send(HttpRequest request) throws RestClientException {
+    public static String send(HttpRequest request) {
         return send(request, (statusCode, body) -> HttpStatus.valueOf(statusCode).is2xxSuccessful());
     }
 
@@ -222,13 +225,16 @@ public class HttpUtil {
      * @param request          HTTP请求
      * @param successPredicate 判断请求成功的断言
      * @return 请求成功返回的结果
+     * @throws RestClientException 网络异常
      */
-    public static String send(HttpRequest request, BiPredicate<Integer, String> successPredicate) throws RestClientException {
+    public static String send(HttpRequest request, BiPredicate<Integer, String> successPredicate) {
         HttpResponse<byte[]> response;
         try {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofByteArray());
-        } catch (IOException | InterruptedException e) {
-            logger.error("HTTP请求网络错误", e);
+        } catch (IOException e) {
+            throw new RestClientException("HTTP请求网络错误", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RestClientException("HTTP请求网络错误", e);
         }
         byte[] body = response.body();

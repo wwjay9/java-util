@@ -14,6 +14,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -86,6 +87,10 @@ public class WeChatPayUtil {
      * 默认的签名类型
      */
     private static final String DEFAULT_SIGN_TYPE = "HMAC-SHA256";
+    /**
+     * 微信支付回调返回成功的xml
+     */
+    private static final String RETURN_SUCCESS_XML = "<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>";
 
     static {
         // 微信接口返回的数据没有指定字符编码
@@ -186,7 +191,7 @@ public class WeChatPayUtil {
      * 微信支付通知时返回的成功信息
      */
     public static String successXml() {
-        return "<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>";
+        return RETURN_SUCCESS_XML;
     }
 
     /**
@@ -311,7 +316,7 @@ public class WeChatPayUtil {
     private static String documentToString(Document document) {
         try {
             StringWriter stringWriter = new StringWriter();
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            TransformerFactory transformerFactory = newTransformerFactory();
             Transformer transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
             transformer.setOutputProperty(OutputKeys.METHOD, "xml");
@@ -329,7 +334,11 @@ public class WeChatPayUtil {
      */
     private static DocumentBuilder newDocumentBuilder() {
         try {
-            return DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            // 防止XXE攻击
+            documentBuilderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            documentBuilderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            return documentBuilderFactory.newDocumentBuilder();
         } catch (ParserConfigurationException e) {
             throw new IllegalArgumentException("创建xml文档构建器异常", e);
         }
@@ -355,6 +364,17 @@ public class WeChatPayUtil {
             throw new IllegalArgumentException("创建SSLContext失败");
         }
         return sc;
+    }
+
+    /**
+     * 创建TransformerFactory实例
+     */
+    private static TransformerFactory newTransformerFactory() {
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        // 防止XXE攻击
+        transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        return transformerFactory;
     }
 
     /**

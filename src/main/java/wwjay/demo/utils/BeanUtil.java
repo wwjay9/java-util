@@ -6,6 +6,7 @@ import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.util.StringUtils;
 
 import java.beans.FeatureDescriptor;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -34,7 +35,7 @@ public class BeanUtil {
      */
     public static <T, R> List<R> copyList(List<T> source, Supplier<R> supplier) {
         if (source == null) {
-            return null;
+            return new ArrayList<>();
         }
         return source.stream().map(copyFunction(supplier)).collect(Collectors.toList());
     }

@@ -99,12 +99,12 @@ public class ExcelUtil {
         try {
             excelFilePath = Files.createTempFile("excel", ".xlsx");
         } catch (IOException e) {
-            throw new RuntimeException("创建临时文件失败", e);
+            throw new ExcelException("创建临时文件失败", e);
         }
         try (workbook; FileOutputStream os = new FileOutputStream(excelFilePath.toFile())) {
             workbook.write(os);
         } catch (IOException e) {
-            throw new RuntimeException("写入Excel失败", e);
+            throw new ExcelException("写入Excel失败", e);
         }
         return excelFilePath;
     }
@@ -304,11 +304,12 @@ public class ExcelUtil {
                 // 查找要复制区域中包含的合并单元格
                 .filter(address -> CellRangeUtil.contains(sourceAddress, address))
                 // 设置偏移量
-                .peek(address -> {
+                .map(address -> {
                     address.setFirstRow(address.getFirstRow() + offsetY);
                     address.setFirstColumn(address.getFirstColumn() + offsetX);
                     address.setLastRow(address.getLastRow() + offsetY);
                     address.setLastColumn(address.getLastColumn() + offsetX);
+                    return address;
                 })
                 // 将合并的单元格复制过来
                 .forEach(targetSheet::addMergedRegion);
@@ -580,7 +581,7 @@ public class ExcelUtil {
                         path = Files.createTempFile("excel_img", "." + pictureData.suggestFileExtension());
                         Files.write(path, pictureData.getData());
                     } catch (IOException e) {
-                        throw new RuntimeException("保存图片到临时文件失败", e);
+                        throw new ExcelException("保存图片到临时文件失败", e);
                     }
                     return path;
                 })
@@ -675,13 +676,13 @@ public class ExcelUtil {
      */
     public static byte[] workbookToByteArray(Workbook workbook) {
         if (workbook == null) {
-            return null;
+            return new byte[]{};
         }
         try (workbook; ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             workbook.write(bos);
             return bos.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("workbook转换失败", e);
+            throw new ExcelException("workbook转换失败", e);
         }
     }
 
@@ -751,4 +752,19 @@ public class ExcelUtil {
             return colWidth > -1 ? colWidth * 256 : null;
         }
     }
+
+    public static class ExcelException extends RuntimeException {
+
+        public ExcelException() {
+        }
+
+        public ExcelException(String message) {
+            super(message);
+        }
+
+        public ExcelException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
 }

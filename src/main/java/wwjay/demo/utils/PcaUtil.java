@@ -1,5 +1,6 @@
 package wwjay.demo.utils;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.core.io.ClassPathResource;
@@ -33,7 +34,7 @@ public class PcaUtil {
             String json = new BufferedReader(new InputStreamReader(inputStream))
                     .lines()
                     .collect(Collectors.joining("\n"));
-            JSONArray provinceJson = JSONArray.parseArray(json);
+            JSONArray provinceJson = JSON.parseArray(json);
             jsonMap(provinceJson);
         } catch (IOException e) {
             throw new IllegalArgumentException("省市区json文件读取失败");

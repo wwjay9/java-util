@@ -219,10 +219,11 @@ public class ZipUtil {
                                 extensionSet.contains(extensionName.toLowerCase());
                     })
                     // 防止被恶意构造的zip文件进行覆盖文件攻击，https://snyk.io/research/zip-slip-vulnerability
-                    .peek(zipEntry -> {
+                    .map(zipEntry -> {
                         Path zipElementPath = Paths.get(target.toString(), zipEntry.getName());
                         Assert.isTrue(zipElementPath.normalize().startsWith(target.normalize()),
                                 "解压的文件在目标文件夹之外: " + zipEntry.getName());
+                        return zipEntry;
                     })
                     .forEach(zipEntry -> {
                         Path zipElementPath = Paths.get(target.toString(), zipEntry.getName());
@@ -255,6 +256,7 @@ public class ZipUtil {
      */
     public static void isValid(final Path file) {
         try (ZipFile zipfile = new ZipFile(file.toFile())) {
+            // 忽略
         } catch (IOException e) {
             throw new ZipException("验证ZIP文件失败:", e);
         }
@@ -265,6 +267,7 @@ public class ZipUtil {
      */
     public static void isValid(final InputStream inputStream) {
         try (ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
+            // 忽略
         } catch (IOException e) {
             throw new ZipException("验证ZIP文件失败:", e);
         }

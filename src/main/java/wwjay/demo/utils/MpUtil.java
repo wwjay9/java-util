@@ -150,7 +150,7 @@ public class MpUtil {
         return responseJson;
     }
 
-    private static <T extends Expired> boolean verifyToken(T token) {
+    private static <T extends Expire> boolean verifyToken(T token) {
         return token != null && !token.isExpired();
     }
 
@@ -167,7 +167,7 @@ public class MpUtil {
     @Getter
     @Setter
     @ToString
-    public static class Expired {
+    public static class Expire {
 
         /**
          * 有效期，单位为秒
@@ -192,7 +192,7 @@ public class MpUtil {
     @Getter
     @Setter
     @ToString(callSuper = true)
-    public static class AccessToken extends Expired {
+    public static class AccessToken extends Expire {
 
         /**
          * access token
@@ -203,7 +203,7 @@ public class MpUtil {
     @Getter
     @Setter
     @ToString(callSuper = true)
-    public static class JsApiTicket extends Expired {
+    public static class JsApiTicket extends Expire {
 
         /**
          * ticket
