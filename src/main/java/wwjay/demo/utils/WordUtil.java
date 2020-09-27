@@ -43,10 +43,8 @@ public class WordUtil {
      */
     private static void replace(XWPFDocument doc, String oldText, String newText) {
         for (XWPFParagraph paragraph : doc.getParagraphs()) {
-            List<int[]> placeholderRange = getPlaceholderRange(paragraph, oldText);
-            if (placeholderRange != null) {
-                placeholderRange.forEach(range -> replaceText(paragraph, range[0], range[1], newText));
-            }
+            getPlaceholderRange(paragraph, oldText)
+                    .forEach(range -> replaceText(paragraph, range[0], range[1], newText));
         }
     }
 

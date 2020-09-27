@@ -13,6 +13,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.*;
 
 /**
@@ -82,9 +83,9 @@ public class ZipUtil {
 
         createZip(zipFile);
 
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFile))) {
-            Files.walk(sourceDirPath)
-                    .filter(path -> !Files.isDirectory(path))
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFile));
+             Stream<Path> sourcePaths = Files.walk(sourceDirPath)) {
+            sourcePaths.filter(Files::isRegularFile)
                     .forEach(path -> {
                         ZipEntry zipEntry = new ZipEntry(sourceDirPath.relativize(path).toString());
                         try {
@@ -219,11 +220,10 @@ public class ZipUtil {
                                 extensionSet.contains(extensionName.toLowerCase());
                     })
                     // 防止被恶意构造的zip文件进行覆盖文件攻击，https://snyk.io/research/zip-slip-vulnerability
-                    .map(zipEntry -> {
+                    .peek(zipEntry -> {
                         Path zipElementPath = Paths.get(target.toString(), zipEntry.getName());
                         Assert.isTrue(zipElementPath.normalize().startsWith(target.normalize()),
                                 "解压的文件在目标文件夹之外: " + zipEntry.getName());
-                        return zipEntry;
                     })
                     .forEach(zipEntry -> {
                         Path zipElementPath = Paths.get(target.toString(), zipEntry.getName());
