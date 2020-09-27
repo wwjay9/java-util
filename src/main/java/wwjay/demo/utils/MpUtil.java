@@ -7,18 +7,18 @@ import lombok.Setter;
 import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.codec.Hex;
+import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.StringJoiner;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * 微信公众号工具类
@@ -38,13 +38,13 @@ public class MpUtil {
      */
     private static final String JS_TICKET_API = "https://api.weixin.qq.com/cgi-bin/ticket/getticket";
     /**
-     * AccessToken缓存，正式使用时可存放在Redis，并设置过期时间
+     * AccessTokenRedis的key
      */
-    private static final ConcurrentHashMap<String, AccessToken> ACCESS_TOKEN_CACHE = new ConcurrentHashMap<>();
+    private static final String ACCESS_TOKEN_REDIS_KEY = "wechat:access_token:%s";
     /**
-     * JsapiTicket缓存，正式使用时可存放在Redis，并设置过期时间
+     * AccessTokenRedis的key
      */
-    private static final ConcurrentHashMap<String, JsApiTicket> JSAPI_TICKET_CACHE = new ConcurrentHashMap<>();
+    private static final String JSAPI_TICKET_REDIS_KEY = "wechat:jsapi_ticket:%s";
 
     private MpUtil() {
     }
@@ -56,24 +56,9 @@ public class MpUtil {
      * @param appSecret 第三方用户唯一凭证密钥
      * @return accessToken
      */
-    public static AccessToken getAccessToken(String appId, String appSecret) {
-        // 利用ConcurrentHashMap的并发操作原子性来更新accessToken，确保不会重复更新
-        return ACCESS_TOKEN_CACHE.compute(appId, (key, accessToken) ->
-                verifyToken(accessToken) ? accessToken : requestAccessTokenApi(appId, appSecret));
-
-        // 当使用Redis作为缓存时需要使用DCL（双重检查锁）
-        // AccessToken accessToken = ACCESS_TOKEN_CACHE.get(appId);
-        // if (!isTokenValid(accessToken)) {
-        //     synchronized (ACCESS_TOKEN_CACHE) {
-        //         accessToken = ACCESS_TOKEN_CACHE.get(appId);
-        //         if (isTokenValid(accessToken)) {
-        //             return accessToken;
-        //         }
-        //         accessToken = requestAccessTokenApi(appId, appSecret);
-        //         ACCESS_TOKEN_CACHE.put(appId, accessToken);
-        //     }
-        // }
-        // return accessToken;
+    public static WeChatAccessToken getAccessToken(String appId, String appSecret) {
+        return getFromRedis(getAccessTokenRedisKey(appId), WeChatAccessToken.class,
+                () -> requestAccessTokenApi(appId, appSecret));
     }
 
     /**
@@ -82,9 +67,9 @@ public class MpUtil {
      * @param accessToken 全局接口调用凭证AccessToken
      * @return accessToken
      */
-    public static JsApiTicket getJsApiTicket(String accessToken) {
-        return JSAPI_TICKET_CACHE.compute(accessToken, (key, ticket) ->
-                verifyToken(ticket) ? ticket : requestJsTicketApi(accessToken));
+    public static WeChatJsApiTicket getJsApiTicket(String accessToken) {
+        return getFromRedis(getJsapiTicketRedisKey(accessToken), WeChatJsApiTicket.class,
+                () -> requestJsTicketApi(accessToken));
     }
 
     /**
@@ -111,13 +96,13 @@ public class MpUtil {
         return wxConfig;
     }
 
-    private static AccessToken requestAccessTokenApi(String appId, String appSecret) {
+    private static WeChatAccessToken requestAccessTokenApi(String appId, String appSecret) {
         Map<String, String> params = Map.of(
                 "grant_type", "client_credential",
                 "appid", appId,
                 "secret", appSecret);
         JSONObject json = requestApi(ACCESS_TOKEN_API, params);
-        AccessToken accessToken = new AccessToken();
+        WeChatAccessToken accessToken = new WeChatAccessToken();
         accessToken.setAccessToken(json.getString("access_token"));
         accessToken.setExpiresIn(json.getInteger("expires_in"));
         // 提前5分钟过期
@@ -125,12 +110,12 @@ public class MpUtil {
         return accessToken;
     }
 
-    private static JsApiTicket requestJsTicketApi(String accessToken) {
+    private static WeChatJsApiTicket requestJsTicketApi(String accessToken) {
         Map<String, String> params = Map.of(
                 "access_token", accessToken,
                 "type", "jsapi");
         JSONObject json = requestApi(JS_TICKET_API, params);
-        JsApiTicket ticket = new JsApiTicket();
+        WeChatJsApiTicket ticket = new WeChatJsApiTicket();
         ticket.setTicket(json.getString("ticket"));
         ticket.setExpiresIn(json.getInteger("expires_in"));
         // 提前5分钟过期
@@ -152,6 +137,32 @@ public class MpUtil {
 
     private static <T extends Expire> boolean verifyToken(T token) {
         return token != null && !token.isExpired();
+    }
+
+    private static String getAccessTokenRedisKey(String appid) {
+        return String.format(ACCESS_TOKEN_REDIS_KEY, appid);
+    }
+
+    private static String getJsapiTicketRedisKey(String accessToken) {
+        return String.format(JSAPI_TICKET_REDIS_KEY, accessToken);
+    }
+
+    private static <T extends Expire> void saveToRedis(String key, T token) {
+        StringRedisTemplate redisTemplate = ApplicationContextProvider.getBean(StringRedisTemplate.class);
+        redisTemplate.opsForValue().set(key, JSON.toJSONString(token), Duration.ofSeconds(token.getExpiresIn()));
+    }
+
+    private static <T extends Expire> T getFromRedis(String key, Class<T> tokenType, Supplier<T> tokenSupplier) {
+        StringRedisTemplate redisTemplate = ApplicationContextProvider.getBean(StringRedisTemplate.class);
+        return Optional.ofNullable(redisTemplate.opsForValue().get(key))
+                .filter(StringUtils::hasText)
+                .map(json -> JSON.parseObject(json, tokenType))
+                .filter(MpUtil::verifyToken)
+                .orElseGet(() -> {
+                    T token = tokenSupplier.get();
+                    saveToRedis(key, token);
+                    return token;
+                });
     }
 
     private static String sha1Hex(String data) {
@@ -192,7 +203,7 @@ public class MpUtil {
     @Getter
     @Setter
     @ToString(callSuper = true)
-    public static class AccessToken extends Expire {
+    public static class WeChatAccessToken extends Expire {
 
         /**
          * access token
@@ -203,7 +214,7 @@ public class MpUtil {
     @Getter
     @Setter
     @ToString(callSuper = true)
-    public static class JsApiTicket extends Expire {
+    public static class WeChatJsApiTicket extends Expire {
 
         /**
          * ticket
