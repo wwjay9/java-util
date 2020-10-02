@@ -88,7 +88,7 @@ public class BeanUtil {
      * @param supplier 新类型生成器
      * @return 新类型List
      */
-    private static <T, R> Function<T, R> copyFunction(Supplier<R> supplier) {
+    public static <T, R> Function<T, R> copyFunction(Supplier<R> supplier) {
         return copyFunction(supplier, (t, r) -> {
         });
     }
