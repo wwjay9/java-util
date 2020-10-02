@@ -5,8 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.codec.Hex;
 import org.springframework.util.StringUtils;
@@ -26,9 +25,9 @@ import java.util.function.Supplier;
  * @author wwj
  */
 @SuppressWarnings({"SpellCheckingInspection", "unused"})
+@Slf4j
 public class MpUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(MpUtil.class);
     /**
      * 获取公众号AccessToken的Api
      */
@@ -129,7 +128,7 @@ public class MpUtil {
         JSONObject responseJson = JSON.parseObject(responseBody);
         Integer errCode = responseJson.getInteger("errcode");
         if (errCode != null && errCode != 0) {
-            logger.error("请求微信AccessToken错误,返回数据:{}", responseBody);
+            log.error("请求微信AccessToken错误,返回数据:{}", responseBody);
             throw new IllegalArgumentException("请求微信AccessToken错误");
         }
         return responseJson;

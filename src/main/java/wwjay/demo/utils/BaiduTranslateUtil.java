@@ -2,8 +2,7 @@ package wwjay.demo.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.DigestUtils;
 
@@ -18,9 +17,9 @@ import java.util.UUID;
  * @author wwj
  */
 @SuppressWarnings("unused")
+@Slf4j
 public class BaiduTranslateUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(BaiduTranslateUtil.class);
     private static final String TRANSLATE_API = "https://fanyi-api.baidu.com/api/trans/vip/translate";
     private final String appId;
     private final String key;
@@ -56,7 +55,7 @@ public class BaiduTranslateUtil {
 
         String errorCode = response.getString("error_code");
         if (errorCode != null) {
-            logger.error("百度翻译异常:{}，请求参数:{}", responseBody, requestParams);
+            log.error("百度翻译异常:{}，请求参数:{}", responseBody, requestParams);
             return null;
         }
         return Optional.ofNullable(response.getJSONArray("trans_result"))

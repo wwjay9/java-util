@@ -5,8 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 
 import javax.crypto.Cipher;
@@ -26,9 +25,9 @@ import java.util.Objects;
  * @author wwj
  */
 @SuppressWarnings({"unused"})
+@Slf4j
 public class MiniProgramUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(MiniProgramUtil.class);
     private static final String CODE2_SESSION_API = "https://api.weixin.qq.com/sns/jscode2session";
 
     private MiniProgramUtil() {
@@ -52,7 +51,7 @@ public class MiniProgramUtil {
         JSONObject responseJson = JSON.parseObject(responseBody);
         Integer errCode = responseJson.getInteger("errcode");
         if (errCode != null && errCode != 0) {
-            logger.error("获取小程序JsCode2Session错误:{}", responseBody);
+            log.error("获取小程序JsCode2Session错误:{}", responseBody);
             throw new IllegalArgumentException("获取小程序JsCode2Session错误");
         }
         JsCode2Session session = new JsCode2Session();
@@ -120,7 +119,7 @@ public class MiniProgramUtil {
             // 解密数据
             data = new String(cipher.doFinal(encryptedDataByte), StandardCharsets.UTF_8);
         } catch (GeneralSecurityException e) {
-            logger.error("解密小程序数据失败", e);
+            log.error("解密小程序数据失败", e);
             throw new IllegalArgumentException("数据解析失败");
         }
         JSONObject dataJson = JSON.parseObject(data);

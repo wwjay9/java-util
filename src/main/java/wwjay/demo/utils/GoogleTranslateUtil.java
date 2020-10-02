@@ -2,8 +2,7 @@ package wwjay.demo.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.Map;
@@ -16,9 +15,9 @@ import java.util.Optional;
  * @author wwj
  */
 @SuppressWarnings("unused")
+@Slf4j
 public class GoogleTranslateUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(GoogleTranslateUtil.class);
     private static final String TRANSLATE_API = "https://translation.googleapis.com/language/translate/v2";
     private final String key;
 
@@ -50,7 +49,7 @@ public class GoogleTranslateUtil {
         try {
             responseBody = HttpUtil.post(TRANSLATE_API + "?key=" + key, requestJson);
         } catch (HttpClientErrorException e) {
-            logger.error("Google翻译异常:{}，请求参数:{}", e.getResponseBodyAsString(), requestJson);
+            log.error("Google翻译异常:{}，请求参数:{}", e.getResponseBodyAsString(), requestJson);
             return null;
         }
         JSONObject response = JSON.parseObject(responseBody);
