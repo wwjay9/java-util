@@ -1,7 +1,11 @@
 package wwjay.demo.utils;
 
+import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
+
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * 字符串工具
@@ -98,5 +102,42 @@ public class StringUtil {
                 : b <= 0xfffccccccccccccL >> 10 ? String.format("%.1f TB", bytes / 0x1p40)
                 : b <= 0xfffccccccccccccL ? String.format("%.1f PB", (bytes >> 10) / 0x1p40)
                 : String.format("%.1f EB", (bytes >> 20) / 0x1p40);
+    }
+
+    /**
+     * 将字符串转换成Long类型，避免出现空指针异常
+     *
+     * @param s 字符串
+     * @return long
+     */
+    @Nullable
+    public static Long toLong(@Nullable String s) {
+        return stringConvert(s, Long::valueOf);
+    }
+
+    /**
+     * 将字符串转换成Integer类型，避免出现空指针异常
+     *
+     * @param s 字符串
+     * @return integer
+     */
+    @Nullable
+    public static Integer toInteger(@Nullable String s) {
+        return stringConvert(s, Integer::valueOf);
+    }
+
+    /**
+     * 字符串转换
+     *
+     * @param s         字符串
+     * @param converter 转换器
+     * @return 转换的值
+     */
+    private static <T> T stringConvert(String s, Function<String, T> converter) {
+        return Optional.ofNullable(s)
+                .filter(StringUtils::hasText)
+                .map(StringUtils::trimWhitespace)
+                .map(converter)
+                .orElse(null);
     }
 }
