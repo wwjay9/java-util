@@ -94,6 +94,22 @@ public class BeanUtil {
     }
 
     /**
+     * 将一个对象拷贝为一个新对象
+     *
+     * @param source    源对象
+     * @param newObject 新对象生成器
+     * @return 拷贝后的对象
+     */
+    public static <T> T copyProperties(Object source, Supplier<T> newObject) {
+        if (source == null) {
+            return null;
+        }
+        T t = newObject.get();
+        BeanUtils.copyProperties(source, t);
+        return t;
+    }
+
+    /**
      * 将一个对象拷贝为另一个对象
      *
      * @param supplier 新类型生成器
