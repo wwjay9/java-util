@@ -3,6 +3,7 @@ package wwjay.demo.utils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
+import java.beans.Introspector;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.function.Function;
@@ -102,6 +103,16 @@ public class StringUtil {
                 : b <= 0xfffccccccccccccL >> 10 ? String.format("%.1f TB", bytes / 0x1p40)
                 : b <= 0xfffccccccccccccL ? String.format("%.1f PB", (bytes >> 10) / 0x1p40)
                 : String.format("%.1f EB", (bytes >> 20) / 0x1p40);
+    }
+
+    /**
+     * 将字符串转换成驼峰格式，如 Name -> name
+     *
+     * @param s 字符串
+     * @return 驼峰格式字符串
+     */
+    public static String toCamelCase(String s) {
+        return Introspector.decapitalize(s);
     }
 
     /**
