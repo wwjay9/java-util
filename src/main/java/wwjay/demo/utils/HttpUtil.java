@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.CookieManager;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -122,8 +121,7 @@ public class HttpUtil {
      */
     public static HttpRequest formUrlencodedRequest(String url, Map<String, String> formData) {
         StringJoiner body = new StringJoiner("&");
-        formData.forEach((k, v) -> body.add(URLEncoder.encode(k, StandardCharsets.UTF_8) + "=" +
-                URLEncoder.encode(v, StandardCharsets.UTF_8)));
+        formData.forEach((k, v) -> body.add(k + "=" + v));
         return HttpRequest.newBuilder(URI.create(url))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
