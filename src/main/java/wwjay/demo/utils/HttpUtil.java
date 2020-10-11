@@ -10,8 +10,12 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -22,9 +26,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
@@ -126,6 +128,38 @@ public class HttpUtil {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
                 .build();
+    }
+
+    /**
+     * 尝试获取当前请求的真实ip地址
+     *
+     * @return ip地址
+     */
+    public static String getCurrentRequestIpAddr() {
+        HttpServletRequest request = getCurrentHttpServletRequest();
+        return List.of("X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP",
+                "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR")
+                .stream()
+                .map(request::getHeader)
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .filter(s -> !"unknown".equalsIgnoreCase(s))
+                .map(s -> new StringTokenizer(s, ",").nextToken().trim())
+                .findFirst()
+                .orElseGet(request::getRemoteAddr);
+    }
+
+    /**
+     * 获取当前线程绑定的HttpServletRequest
+     *
+     * @return HttpServletRequest
+     */
+    public static HttpServletRequest getCurrentHttpServletRequest() {
+        RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
+        if (requestAttributes instanceof ServletRequestAttributes) {
+            return ((ServletRequestAttributes) requestAttributes).getRequest();
+        }
+        throw new IllegalArgumentException("未在当前线程找到HttpServletRequest");
     }
 
     /**
