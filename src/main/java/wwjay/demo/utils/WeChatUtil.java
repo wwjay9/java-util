@@ -48,6 +48,14 @@ public class WeChatUtil {
     /**
      * 获取微信用户信息
      */
+    public static WeChatUserInfo getUserInfo(String appId, String appSecret, String code) {
+        WeChatAccessToken accessToken = getAccessToken(appId, appSecret, code);
+        return getUserInfo(accessToken.getAccessToken(), accessToken.getOpenId());
+    }
+
+    /**
+     * 获取微信用户信息
+     */
     public static WeChatUserInfo getUserInfo(String accessToken, String openId) {
         String response = HttpUtil.get(String.format(USER_INFO_API, accessToken, openId));
         JSONObject json = JSON.parseObject(response);
