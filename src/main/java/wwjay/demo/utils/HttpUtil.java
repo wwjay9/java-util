@@ -1,10 +1,10 @@
 package wwjay.demo.utils;
 
 
+import lombok.Getter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -321,5 +321,17 @@ public class HttpUtil {
         } catch (IOException e) {
             throw new RestClientException("GZip解压失败", e);
         }
+    }
+
+    @Getter
+    public static class UsernamePasswordAuthenticationToken {
+
+        public UsernamePasswordAuthenticationToken(String username, String password) {
+            this.username = username;
+            this.password = password;
+        }
+
+        private final String username;
+        private final String password;
     }
 }
