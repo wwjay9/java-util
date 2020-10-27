@@ -1,4 +1,4 @@
-package wwjay.demo.utils;
+package wwjay.demo.utils.wechat;
 
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.security.crypto.codec.Hex;
@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
+import wwjay.demo.utils.StringUtil;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;

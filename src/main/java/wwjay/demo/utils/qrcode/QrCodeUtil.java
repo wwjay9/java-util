@@ -1,4 +1,4 @@
-package wwjay.demo.utils;
+package wwjay.demo.utils.qrcode;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;

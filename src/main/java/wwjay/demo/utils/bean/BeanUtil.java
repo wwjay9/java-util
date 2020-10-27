@@ -1,4 +1,4 @@
-package wwjay.demo.utils;
+package wwjay.demo.utils.bean;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;

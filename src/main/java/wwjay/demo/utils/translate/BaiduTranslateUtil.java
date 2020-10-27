@@ -1,10 +1,11 @@
-package wwjay.demo.utils;
+package wwjay.demo.utils.translate;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.DigestUtils;
+import wwjay.demo.utils.HttpUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;

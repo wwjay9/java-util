@@ -1,9 +1,10 @@
-package wwjay.demo.utils;
+package wwjay.demo.utils.translate;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.HttpClientErrorException;
+import wwjay.demo.utils.HttpUtil;
 
 import java.util.Map;
 import java.util.Optional;

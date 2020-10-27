@@ -1,4 +1,4 @@
-package wwjay.demo.utils;
+package wwjay.demo.utils.word;
 
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;

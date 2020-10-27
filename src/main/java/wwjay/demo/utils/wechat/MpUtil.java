@@ -1,4 +1,4 @@
-package wwjay.demo.utils;
+package wwjay.demo.utils.wechat;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -9,6 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.codec.Hex;
 import org.springframework.util.StringUtils;
+import wwjay.demo.utils.HttpUtil;
+import wwjay.demo.utils.StringUtil;
+import wwjay.demo.utils.bean.ApplicationContextProvider;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

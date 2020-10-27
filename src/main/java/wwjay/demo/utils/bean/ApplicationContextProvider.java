@@ -1,4 +1,4 @@
-package wwjay.demo.utils;
+package wwjay.demo.utils.bean;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
