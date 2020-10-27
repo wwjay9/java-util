@@ -89,6 +89,14 @@ public class StringUtil {
     }
 
     /**
+     * 检测字符串是否包含中文
+     */
+    public static boolean detectChinese(String s) {
+        return s.codePoints()
+                .anyMatch(codePoint -> Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.HAN);
+    }
+
+    /**
      * 将byte字节大小格式化成方便阅读的格式
      *
      * @param bytes 字节大小
