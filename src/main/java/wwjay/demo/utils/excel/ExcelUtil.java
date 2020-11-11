@@ -304,12 +304,11 @@ public class ExcelUtil {
                 // 查找要复制区域中包含的合并单元格
                 .filter(address -> CellRangeUtil.contains(sourceAddress, address))
                 // 设置偏移量
-                .map(address -> {
+                .peek(address -> {
                     address.setFirstRow(address.getFirstRow() + offsetY);
                     address.setFirstColumn(address.getFirstColumn() + offsetX);
                     address.setLastRow(address.getLastRow() + offsetY);
                     address.setLastColumn(address.getLastColumn() + offsetX);
-                    return address;
                 })
                 // 将合并的单元格复制过来
                 .forEach(targetSheet::addMergedRegion);

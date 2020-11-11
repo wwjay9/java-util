@@ -352,7 +352,7 @@ public class WeChatPayUtil {
      * @param password 证书密码
      * @return SSLContext
      */
-    private static SSLContext createSslContext(InputStream p12File, String password) {
+    public static SSLContext createSslContext(InputStream p12File, String password) {
         SSLContext sc;
         try {
             KeyStore ks = KeyStore.getInstance("PKCS12");

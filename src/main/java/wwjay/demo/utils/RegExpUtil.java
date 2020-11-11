@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
  *
  * @author wwj
  */
+@SuppressWarnings("unused")
 public class RegExpUtil {
 
     private static final Pattern MOBILE_PATTERN = Pattern.compile("^(?:(?:\\+|00)86)?1\\d{10}$");

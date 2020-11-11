@@ -16,6 +16,7 @@ import java.util.stream.IntStream;
  *
  * @author wwj
  */
+@SuppressWarnings("unused")
 @Slf4j
 public class WeChatUtil {
 
