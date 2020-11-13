@@ -2,6 +2,7 @@ package wwjay.demo.utils;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -10,7 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 线程池工具类
+ * 线程工具类
  *
  * @author wwj
  */
@@ -18,7 +19,30 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class ThreadUtil {
 
+    private static final int POOL_SIZE = Runtime.getRuntime().availableProcessors() * 2;
+    private static final ForkJoinPool FORK_JOIN_POOL = new ForkJoinPool(POOL_SIZE);
+
     private ThreadUtil() {
+    }
+
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (!FORK_JOIN_POOL.isShutdown()) {
+                FORK_JOIN_POOL.shutdown();
+            }
+            log.info("ThreadUtil线程池已被关闭");
+        }));
+    }
+
+    /**
+     * 使用ForkJoinPool线程池来执行批量操作
+     *
+     * @param list   任务列表
+     * @param mapper 任务转换
+     * @return 任务结果
+     */
+    public static <T, R> List<R> forkJoinTasks(Collection<T> list, Function<T, R> mapper) {
+        return forkJoinTasks(list, FORK_JOIN_POOL, mapper);
     }
 
     /**
@@ -29,7 +53,7 @@ public class ThreadUtil {
      * @param mapper      任务转换
      * @return 任务结果
      */
-    public static <T, R> List<R> forkJoinTasks(List<T> list, int parallelism, Function<T, R> mapper) {
+    public static <T, R> List<R> forkJoinTasks(Collection<T> list, int parallelism, Function<T, R> mapper) {
         ForkJoinPool forkJoinPool = new ForkJoinPool(parallelism);
         try {
             return forkJoinTasks(list, forkJoinPool, mapper);
@@ -50,7 +74,7 @@ public class ThreadUtil {
      * @see ForkJoinPool#commonPool
      * @see ForkJoinTask#fork
      */
-    public static <T, R> List<R> forkJoinTasks(List<T> list, ForkJoinPool forkJoinPool, Function<T, R> mapper) {
+    public static <T, R> List<R> forkJoinTasks(Collection<T> list, ForkJoinPool forkJoinPool, Function<T, R> mapper) {
         try {
             return forkJoinPool.submit(() -> list.parallelStream().map(mapper).collect(Collectors.toList())).get();
         } catch (InterruptedException e) {
