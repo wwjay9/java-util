@@ -141,4 +141,22 @@ public class BeanUtil {
                 .filter(propertyName -> beanWrapper.getPropertyValue(propertyName) == null)
                 .toArray(String[]::new);
     }
+
+    /**
+     * 判断对象的所有字段是否为null
+     *
+     * @param obj 对象
+     * @return 所有字段都为null时返回true
+     */
+    public static boolean allFieldIsNull(Object obj) {
+        if (obj == null) {
+            return true;
+        }
+        BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(obj);
+        return Stream.of(beanWrapper.getPropertyDescriptors())
+                .map(FeatureDescriptor::getName)
+                .filter(name -> !Objects.equals(name, "class"))
+                .map(beanWrapper::getPropertyValue)
+                .allMatch(Objects::isNull);
+    }
 }
