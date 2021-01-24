@@ -317,7 +317,7 @@ public class HttpUtil {
         try (InputStream is = new GZIPInputStream(new ByteArrayInputStream(bytes));
              ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             is.transferTo(os);
-            return new String(os.toByteArray(), StandardCharsets.UTF_8);
+            return os.toString(StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RestClientException("GZip解压失败", e);
         }
