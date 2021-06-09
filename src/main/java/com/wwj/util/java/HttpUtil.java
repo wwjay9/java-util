@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.CookieManager;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -309,6 +310,19 @@ public class HttpUtil {
     }
 
     /**
+     * 下载文件到文件夹，文件名根据url推断，当文件已存在时重命名文件
+     *
+     * @param url             文件url
+     * @param directoriesPath 下载文件存放路径
+     */
+    public static Path downloadFileToDirectories(String url, Path directoriesPath) {
+        String filename = URLDecoder.decode(StringUtils.getFilename(url), StandardCharsets.UTF_8);
+        Path filePath = increaseFilename(directoriesPath.resolve(filename), 0);
+        downloadFile(url, filePath);
+        return filePath;
+    }
+
+    /**
      * 下载文件，如果文件存在则覆盖
      *
      * @param url      文件url
@@ -370,5 +384,31 @@ public class HttpUtil {
 
         private final String username;
         private final String password;
+    }
+
+    /**
+     * 当路径下的文件名已存在时，自动修改文件名，规则为原始文件名后面增加(n)
+     */
+    private static Path increaseFilename(Path filePath, int increase) {
+        if (Files.notExists(filePath)) {
+            return filePath;
+        }
+        int newIncrease = increase + 1;
+        String repeatNo = filenameRepeatNo(increase);
+        String newRepeatNo = filenameRepeatNo(newIncrease);
+        String filename = filePath.getFileName().toString();
+        String filenameExtension = StringUtils.getFilenameExtension(filename);
+        String newFilename;
+        if (filenameExtension != null) {
+            String name = StringUtil.removeEnd(filename, "." + filenameExtension);
+            newFilename = StringUtil.removeEnd(name, repeatNo) + newRepeatNo + "." + filenameExtension;
+        } else {
+            newFilename = StringUtil.removeEnd(filename, repeatNo) + newRepeatNo;
+        }
+        return increaseFilename(filePath.resolveSibling(newFilename), newIncrease);
+    }
+
+    private static String filenameRepeatNo(int increase) {
+        return "(" + increase + ")";
     }
 }

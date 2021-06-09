@@ -68,6 +68,23 @@ public class StringUtil {
     }
 
     /**
+     * 当要删除的字符串与原始字符串的末尾相同时，则删除
+     *
+     * @param str    原始字符串
+     * @param remove 要删除的字符串
+     * @return 删除后的字符串
+     */
+    public static String removeEnd(String str, String remove) {
+        if (isEmpty(str) || isEmpty(remove)) {
+            return str;
+        }
+        if (str.endsWith(remove)) {
+            return str.substring(0, str.length() - remove.length());
+        }
+        return str;
+    }
+
+    /**
      * 将十进制数字转换成62进制
      *
      * @param num 十进制数字
@@ -158,5 +175,15 @@ public class StringUtil {
                 .map(StringUtils::trimWhitespace)
                 .map(converter)
                 .orElse(null);
+    }
+
+    /**
+     * 判断字符串是否是null或""
+     *
+     * @param str 字符串
+     * @return "  "返回false
+     */
+    private static boolean isEmpty(String str) {
+        return !StringUtils.hasLength(str);
     }
 }
