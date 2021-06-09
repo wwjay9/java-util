@@ -26,4 +26,6 @@ module com.wwj.util.java {
     // 二维码
     requires com.google.zxing;
     requires com.google.zxing.javase;
+    // jsoup
+    requires org.jsoup;
 }
