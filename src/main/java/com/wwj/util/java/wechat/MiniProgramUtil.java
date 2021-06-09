@@ -137,12 +137,10 @@ public class MiniProgramUtil {
          * 用户唯一标识
          */
         private String openid;
-
         /**
          * 会话密钥
          */
         private String sessionKey;
-
         /**
          * 用户在开放平台的唯一标识符
          */
@@ -158,42 +156,34 @@ public class MiniProgramUtil {
          * 微信openId
          */
         private String openId;
-
         /**
          * 昵称
          */
         private String nickName;
-
         /**
          * 头像url
          */
         private String avatarUrl;
-
         /**
          * 性别 0:未知 1:男 2:女
          */
         private int gender;
-
         /**
          * 用户所在国家
          */
         private String country;
-
         /**
          * 用户所在省份
          */
         private String province;
-
         /**
          * 用户所在城市
          */
         private String city;
-
         /**
          * 显示 country，province，city 所用的语言
          */
         private String language;
-
         /**
          * 微信平台ID
          */

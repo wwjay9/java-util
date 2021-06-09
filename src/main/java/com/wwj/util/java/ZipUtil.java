@@ -9,23 +9,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
+import java.util.zip.*;
 
 /**
  * zip工具
@@ -50,10 +39,10 @@ public class ZipUtil {
             if (filePaths != null && filePaths.length > 0) {
                 for (Path path : filePaths) {
                     if (!Files.exists(path)) {
-                        throw new ZipException(path.toString() + "文件不存在");
+                        throw new ZipException(path + "文件不存在");
                     }
                     if (!Files.isRegularFile(path)) {
-                        throw new ZipException(path.toString() + "不是一个文件");
+                        throw new ZipException(path + "不是一个文件");
                     }
                     ZipEntry zipEntry = new ZipEntry(path.getFileName().toString());
                     zipOutputStream.putNextEntry(zipEntry);

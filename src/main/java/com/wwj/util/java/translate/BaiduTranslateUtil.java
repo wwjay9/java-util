@@ -190,7 +190,6 @@ public class BaiduTranslateUtil {
          * 越南语
          */
         VIE("vie");
-
         private final String isoCode;
 
         Lang(String isoCode) {

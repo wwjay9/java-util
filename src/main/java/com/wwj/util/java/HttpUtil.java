@@ -1,6 +1,5 @@
 package com.wwj.util.java;
 
-
 import lombok.Getter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,11 +25,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
-import java.util.StringTokenizer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
@@ -40,7 +38,6 @@ import java.util.zip.GZIPInputStream;
  *
  * @author wwj
  */
-
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class HttpUtil {
 
@@ -273,12 +270,25 @@ public class HttpUtil {
             Thread.currentThread().interrupt();
             throw new RestClientException("HTTP请求网络错误", e);
         }
+        HttpStatus responseHttpStatus = HttpStatus.valueOf(response.statusCode());
+        // 3xx重定向
+        if (responseHttpStatus.is3xxRedirection()) {
+            URI redirectionUri = response.headers()
+                    .firstValue(HttpHeaders.LOCATION)
+                    .map(URI::create)
+                    .orElse(null);
+            if (redirectionUri != null) {
+                String redirectionUrl = redirectionUri.isAbsolute() ? redirectionUri.toString() :
+                        request.uri().resolve(redirectionUri).toString();
+                return get(redirectionUrl);
+            }
+        }
+
         byte[] body = response.body();
         String responseBody = isGzip(body) ? gunzip(body) : new String(body, StandardCharsets.UTF_8);
         if (successPredicate.test(response.statusCode(), responseBody)) {
             return responseBody;
         }
-        HttpStatus responseHttpStatus = HttpStatus.valueOf(response.statusCode());
         HttpHeaders httpHeaders = new HttpHeaders();
         response.headers().map().forEach(httpHeaders::addAll);
 
@@ -296,6 +306,29 @@ public class HttpUtil {
         HTTP_CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
                 .thenAccept(completedAction);
+    }
+
+    /**
+     * 下载文件，如果文件存在则覆盖
+     *
+     * @param url      文件url
+     * @param filePath 下载文件存放的完整路径，包含文件名
+     */
+    public static void downloadFile(String url, Path filePath) {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url)).build();
+        try {
+            InputStream inputStream = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream()).body();
+            Files.createDirectories(filePath.getParent());
+            if (Files.notExists(filePath)) {
+                Files.createFile(filePath);
+            }
+            Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RestClientException("HTTP文件下载失败", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RestClientException("HTTP文件下载失败", e);
+        }
     }
 
     /**

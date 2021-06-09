@@ -19,11 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Optional;
-import java.util.SortedMap;
-import java.util.StringJoiner;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -190,12 +186,10 @@ public class MpUtil {
          * 有效期，单位为秒
          */
         private Integer expiresIn;
-
         /**
          * 到期时间
          */
         private LocalDateTime expireTime;
-
         /**
          * 是否已过期
          */
@@ -237,22 +231,18 @@ public class MpUtil {
          * 是否开启调试模式
          */
         private boolean debug = false;
-
         /**
          * appId
          */
         private String appId;
-
         /**
          * 生成签名的时间戳
          */
         private Long timestamp;
-
         /**
          * 生成签名的随机串
          */
         private String nonceStr;
-
         /**
          * 签名
          */

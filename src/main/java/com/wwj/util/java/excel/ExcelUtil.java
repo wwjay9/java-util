@@ -1,23 +1,10 @@
 package com.wwj.util.java.excel;
 
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeUtil;
 import org.apache.poi.ss.util.CellUtil;
-import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
-import org.apache.poi.xssf.usermodel.XSSFDrawing;
-import org.apache.poi.xssf.usermodel.XSSFPicture;
-import org.apache.poi.xssf.usermodel.XSSFPictureData;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.lang.Nullable;
@@ -33,13 +20,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -585,8 +566,8 @@ public class ExcelUtil {
             return new ArrayList<>();
         }
         return drawing.getShapes().stream()
-                .filter(shape -> shape instanceof XSSFPicture)
-                .map(shape -> (XSSFPicture) shape)
+                .filter(XSSFPicture.class::isInstance)
+                .map(XSSFPicture.class::cast)
                 .filter(picture -> {
                     XSSFClientAnchor anchor = (XSSFClientAnchor) picture.getAnchor();
                     // 以左上角单元格为基准
