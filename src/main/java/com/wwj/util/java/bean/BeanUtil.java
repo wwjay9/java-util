@@ -6,9 +6,7 @@ import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.util.StringUtils;
 
 import java.beans.FeatureDescriptor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -107,6 +105,18 @@ public class BeanUtil {
         T t = newObject.get();
         BeanUtils.copyProperties(source, t);
         return t;
+    }
+
+    /**
+     * 将集合转成MAP
+     *
+     * @param collection 集合
+     * @param getKey     map的key
+     * @return LinkedHashMap
+     */
+    public static <K, V> Map<K, V> toMap(Collection<V> collection, Function<V, K> getKey) {
+        return collection.stream()
+                .collect(Collectors.toMap(getKey, Function.identity(), (o1, o2) -> o2, LinkedHashMap::new));
     }
 
     /**
