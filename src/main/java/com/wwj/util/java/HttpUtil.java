@@ -374,18 +374,6 @@ public class HttpUtil {
         }
     }
 
-    @Getter
-    public static class UsernamePasswordAuthenticationToken {
-
-        public UsernamePasswordAuthenticationToken(String username, String password) {
-            this.username = username;
-            this.password = password;
-        }
-
-        private final String username;
-        private final String password;
-    }
-
     /**
      * 当路径下的文件名已存在时，自动修改文件名，规则为原始文件名后面增加(n)
      */
@@ -410,5 +398,17 @@ public class HttpUtil {
 
     private static String filenameRepeatNo(int increase) {
         return "(" + increase + ")";
+    }
+
+    @Getter
+    public static class UsernamePasswordAuthenticationToken {
+
+        private final String username;
+        private final String password;
+
+        public UsernamePasswordAuthenticationToken(String username, String password) {
+            this.username = username;
+            this.password = password;
+        }
     }
 }

@@ -22,9 +22,6 @@ public class ThreadUtil {
     private static final int POOL_SIZE = Runtime.getRuntime().availableProcessors() * 2;
     private static final ForkJoinPool FORK_JOIN_POOL = new ForkJoinPool(POOL_SIZE);
 
-    private ThreadUtil() {
-    }
-
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (!FORK_JOIN_POOL.isShutdown()) {
@@ -32,6 +29,9 @@ public class ThreadUtil {
             }
             log.info("ThreadUtil线程池已被关闭");
         }));
+    }
+
+    private ThreadUtil() {
     }
 
     /**
