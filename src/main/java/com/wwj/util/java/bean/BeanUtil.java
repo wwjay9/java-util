@@ -120,6 +120,31 @@ public class BeanUtil {
     }
 
     /**
+     * 转换Map的Value类型
+     *
+     * @param map          原始Map
+     * @param valueConvert value的类型转换
+     * @return 转换后的Map
+     */
+    public static <K, V, U> Map<K, U> convertMapValueType(Map<K, V> map, Function<V, U> valueConvert) {
+        return map.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> valueConvert.apply(e.getValue())));
+    }
+
+    /**
+     * 根据List中的字段进行去重
+     *
+     * @param list         原始list
+     * @param keyExtractor 判断重复的key
+     * @return 去重后的列表
+     */
+    public static <T> List<T> distinctListByKey(List<T> list, Function<? super T, ?> keyExtractor) {
+        return new ArrayList<>(list.stream()
+                .collect(Collectors.toMap(keyExtractor, Function.identity(), (o1, o2) -> o1, LinkedHashMap::new))
+                .values());
+    }
+
+    /**
      * 将一个对象拷贝为另一个对象
      *
      * @param supplier 新类型生成器
