@@ -58,7 +58,7 @@ public class ExcelUtil {
         List<ColumnProperty> columnProperty = getExcelProperty(data.get(0).getClass());
         Assert.notEmpty(columnProperty, "没有需要写入的字段");
 
-        Workbook workbook = XSSFWorkbookFactory.createWorkbook();
+        Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet();
 
         // 写入表头

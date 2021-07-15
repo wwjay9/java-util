@@ -18,6 +18,7 @@ module com.wwj.util.java {
     requires spring.web;
     requires spring.data.redis;
     requires spring.security.core;
+    requires spring.security.crypto;
     // fastjson
     requires fastjson;
     // poi
