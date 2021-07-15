@@ -1,8 +1,12 @@
 package com.wwj.util.java;
 
+import com.wwj.util.java.bean.BeanUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -86,5 +90,39 @@ public class ThreadUtil {
             log.error("任务执行失败:", e);
             throw new IllegalStateException(e);
         }
+    }
+
+    /**
+     * 将List拆分成多个大小为1000的子List，多线程转换处理
+     *
+     * @param list      原始List
+     * @param convertor 转换器
+     * @return 转换后的List
+     */
+    public static <T, R> List<R> parallelConvert(List<T> list, Function<List<T>, List<R>> convertor) {
+        return parallelConvert(1000, list, convertor);
+    }
+
+    /**
+     * 将List拆分成多个子List，多线程转换处理
+     *
+     * @param size      每个子List的大小
+     * @param list      原始List
+     * @param convertor 转换器
+     * @return 转换后的List
+     */
+    public static <T, R> List<R> parallelConvert(int size, List<T> list, Function<List<T>, List<R>> convertor) {
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        // 对原始List进行去重，防止产生重复数据
+        List<T> distinctList = new ArrayList<>(new LinkedHashSet<>(list));
+        if (distinctList.size() <= size) {
+            return convertor.apply(distinctList);
+        }
+        return BeanUtil.listPartition(distinctList, size).parallelStream()
+                .map(convertor)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
     }
 }
