@@ -126,14 +126,14 @@ public class BeanUtil {
     }
 
     /**
-     * 将一个List转成另一个List
+     * 将一个List转成另一个List，并过滤Null值
      *
      * @param list      原始List
      * @param convertor 转换器
      * @return 转换后的List
      */
     public static <F, T> List<T> listTransform(List<F> list, Function<? super F, ? extends T> convertor) {
-        return list.stream().map(convertor).collect(Collectors.toList());
+        return list.stream().map(convertor).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     /**
