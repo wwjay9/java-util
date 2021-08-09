@@ -68,6 +68,23 @@ public class StringUtil {
     }
 
     /**
+     * 当要删除的字符串与原始字符串的开头相同时，则删除
+     *
+     * @param str    原始字符串
+     * @param remove 要删除的字符串
+     * @return 删除后的字符串
+     */
+    public static String removeStart(String str, String remove) {
+        if (isEmpty(str) || isEmpty(remove)) {
+            return str;
+        }
+        if (str.startsWith(remove)) {
+            return str.substring(remove.length());
+        }
+        return str;
+    }
+
+    /**
      * 当要删除的字符串与原始字符串的末尾相同时，则删除
      *
      * @param str    原始字符串
