@@ -1,12 +1,15 @@
 package com.wwj.util.java;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.context.request.RequestAttributes;
@@ -29,9 +32,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.Base64;
+import java.util.Map;
+import java.util.StringJoiner;
+import java.util.StringTokenizer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -40,6 +47,7 @@ import java.util.zip.GZIPInputStream;
  * @author wwj
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
+@Slf4j
 public class HttpUtil {
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
@@ -117,31 +125,14 @@ public class HttpUtil {
     }
 
     /**
-     * 构建一个form-urlencoded的post请求
-     *
-     * @param url      请求地址
-     * @param formData 表单数据
-     * @return HttpRequest
-     */
-    public static HttpRequest formUrlencodedRequest(String url, Map<String, String> formData) {
-        StringJoiner body = new StringJoiner("&");
-        formData.forEach((k, v) -> body.add(k + "=" + v));
-        return HttpRequest.newBuilder(URI.create(url))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
-                .build();
-    }
-
-    /**
      * 尝试获取当前请求的真实ip地址
      *
      * @return ip地址
      */
-    public static String getCurrentRequestIpAddr() {
+    public static String getCurrentRequestIpAddress() {
         HttpServletRequest request = getCurrentHttpServletRequest();
-        return List.of("X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP",
-                "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR")
-                .stream()
+        return Stream.of("X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP",
+                        "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR")
                 .map(request::getHeader)
                 .filter(StringUtils::hasText)
                 .map(String::trim)
@@ -161,7 +152,7 @@ public class HttpUtil {
         if (requestAttributes instanceof ServletRequestAttributes) {
             return ((ServletRequestAttributes) requestAttributes).getRequest();
         }
-        throw new IllegalArgumentException("未在当前线程找到HttpServletRequest");
+        throw new IllegalStateException("未在当前线程找到HttpServletRequest");
     }
 
     /**
@@ -224,6 +215,22 @@ public class HttpUtil {
     }
 
     /**
+     * 构建一个form-urlencoded的post请求
+     *
+     * @param url      请求地址
+     * @param formData 表单数据
+     * @return HttpRequest
+     */
+    public static HttpRequest formUrlencodedRequest(String url, Map<String, String> formData) {
+        StringJoiner body = new StringJoiner("&");
+        formData.forEach((k, v) -> body.add(k + "=" + v));
+        return HttpRequest.newBuilder(URI.create(url))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                .build();
+    }
+
+    /**
      * 发送一个json的post请求
      *
      * @param username    Basic认证的用户名
@@ -262,15 +269,7 @@ public class HttpUtil {
      * @throws RestClientException 网络异常
      */
     public static String send(HttpRequest request, BiPredicate<Integer, String> successPredicate) {
-        HttpResponse<byte[]> response;
-        try {
-            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofByteArray());
-        } catch (IOException e) {
-            throw new RestClientException("HTTP请求网络错误", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RestClientException("HTTP请求网络错误", e);
-        }
+        HttpResponse<byte[]> response = send(request, HttpResponse.BodyHandlers.ofByteArray());
         HttpStatus responseHttpStatus = HttpStatus.valueOf(response.statusCode());
         // 3xx重定向
         if (responseHttpStatus.is3xxRedirection()) {
@@ -316,7 +315,12 @@ public class HttpUtil {
      * @param directoriesPath 下载文件存放路径
      */
     public static Path downloadFileToDirectories(String url, Path directoriesPath) {
-        String filename = URLDecoder.decode(StringUtils.getFilename(url), StandardCharsets.UTF_8);
+        // 删除url中的查询参数
+        String newUrl = UriComponentsBuilder.fromHttpUrl(url)
+                .replaceQuery("")
+                .build()
+                .toString();
+        String filename = URLDecoder.decode(StringUtils.getFilename(newUrl), StandardCharsets.UTF_8);
         Path filePath = increaseFilename(directoriesPath.resolve(filename), 0);
         downloadFile(url, filePath);
         return filePath;
@@ -330,19 +334,34 @@ public class HttpUtil {
      */
     public static void downloadFile(String url, Path filePath) {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url)).build();
+        InputStream inputStream = send(request, HttpResponse.BodyHandlers.ofInputStream()).body();
         try {
-            InputStream inputStream = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream()).body();
             Files.createDirectories(filePath.getParent());
             if (Files.notExists(filePath)) {
                 Files.createFile(filePath);
             }
             Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new RestClientException("HTTP文件下载失败", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RestClientException("HTTP文件下载失败", e);
+            throw new RestClientException("下载文件错误", e);
         }
+    }
+
+    /**
+     * 根据url获取文件的类型
+     *
+     * @param url url
+     * @return 文件信息
+     */
+    public static RemoteFileInfo getRemoteFileInfo(String url) {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .method("HEAD", HttpRequest.BodyPublishers.noBody())
+                .build();
+        HttpResponse<Void> response = send(request, HttpResponse.BodyHandlers.discarding());
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.putAll(response.headers().map());
+        DataSize dataSize = DataSize.ofBytes(httpHeaders.getContentLength());
+        MediaType contentType = httpHeaders.getContentType();
+        return new RemoteFileInfo(dataSize, contentType);
     }
 
     /**
@@ -400,6 +419,20 @@ public class HttpUtil {
         return "(" + increase + ")";
     }
 
+    /**
+     * 发送网络请求
+     */
+    private static <T> HttpResponse<T> send(HttpRequest request, HttpResponse.BodyHandler<T> responseBodyHandler) {
+        try {
+            return HTTP_CLIENT.send(request, responseBodyHandler);
+        } catch (IOException e) {
+            throw new RestClientException("HTTP请求网络错误", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RestClientException("HTTP请求网络错误", e);
+        }
+    }
+
     @Getter
     public static class UsernamePasswordAuthenticationToken {
 
@@ -410,5 +443,19 @@ public class HttpUtil {
             this.username = username;
             this.password = password;
         }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class RemoteFileInfo {
+
+        /**
+         * 文件大小
+         */
+        private DataSize dataSize;
+        /**
+         * 文件类型
+         */
+        private MediaType contentType;
     }
 }
