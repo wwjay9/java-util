@@ -6,13 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -32,10 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Base64;
-import java.util.Map;
-import java.util.StringJoiner;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -129,8 +126,12 @@ public class HttpUtil {
      *
      * @return ip地址
      */
+    @Nullable
     public static String getCurrentRequestIpAddress() {
         HttpServletRequest request = getCurrentHttpServletRequest();
+        if (request == null) {
+            return null;
+        }
         return Stream.of("X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP",
                         "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR")
                 .map(request::getHeader)
@@ -147,12 +148,13 @@ public class HttpUtil {
      *
      * @return HttpServletRequest
      */
+    @Nullable
     public static HttpServletRequest getCurrentHttpServletRequest() {
-        RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
-        if (requestAttributes instanceof ServletRequestAttributes) {
-            return ((ServletRequestAttributes) requestAttributes).getRequest();
-        }
-        throw new IllegalStateException("未在当前线程找到HttpServletRequest");
+        return Optional.ofNullable(RequestContextHolder.getRequestAttributes())
+                .filter(ServletRequestAttributes.class::isInstance)
+                .map(ServletRequestAttributes.class::cast)
+                .map(ServletRequestAttributes::getRequest)
+                .orElse(null);
     }
 
     /**
