@@ -4,12 +4,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.beans.FeatureDescriptor;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -126,6 +128,16 @@ public class BeanUtil {
     }
 
     /**
+     * 根据条件过滤list
+     */
+    public static <T> List<T> listFilter(List<T> list, Predicate<? super T> predicate) {
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        return list.stream().filter(predicate).collect(Collectors.toList());
+    }
+
+    /**
      * 将一个List转成另一个List，并过滤Null值
      *
      * @param list      原始List
@@ -144,8 +156,20 @@ public class BeanUtil {
      * @return LinkedHashMap
      */
     public static <K, V> Map<K, V> listToMap(Collection<V> collection, Function<V, K> getKey) {
+        return listToMap(collection, getKey, Function.identity());
+    }
+
+    /**
+     * 将集合转成MAP
+     *
+     * @param collection 集合
+     * @param getKey     map的key
+     * @param getValue   map的value
+     * @return LinkedHashMap
+     */
+    public static <C, K, V> Map<K, V> listToMap(Collection<C> collection, Function<C, K> getKey, Function<C, V> getValue) {
         return collection.stream()
-                .collect(Collectors.toMap(getKey, Function.identity(), (o1, o2) -> o2, LinkedHashMap::new));
+                .collect(Collectors.toMap(getKey, getValue, (o1, o2) -> o2, LinkedHashMap::new));
     }
 
     /**
