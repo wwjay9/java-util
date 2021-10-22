@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -36,6 +37,19 @@ public class ThreadUtil {
     }
 
     private ThreadUtil() {
+    }
+
+    /**
+     * 使用ForkJoinPool线程池来执行批量操作
+     *
+     * @param list     任务列表
+     * @param consumer 任务执行
+     */
+    public static <T> void forkJoinTasks(List<T> list, Consumer<T> consumer) {
+        forkJoinTasks(list, t -> {
+            consumer.accept(t);
+            return t;
+        });
     }
 
     /**
