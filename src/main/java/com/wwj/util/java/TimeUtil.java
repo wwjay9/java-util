@@ -1,8 +1,6 @@
 package com.wwj.util.java;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -29,15 +27,13 @@ public class TimeUtil {
     /**
      * yyyy-MM-dd HH:mm:ss格式的字符串转LocalDateTime
      */
-    @Nullable
     public static LocalDateTime toLocalDateTime(String date) {
-        return StringUtils.hasText(date) ? LocalDateTime.parse(date, FORMATTER) : null;
+        return LocalDateTime.parse(date, FORMATTER);
     }
 
     /**
      * Date转LocalDateTime
      */
-    @Nullable
     public static LocalDateTime toLocalDateTime(Date date) {
         return toLocalDateTime(date.toInstant());
     }
@@ -45,7 +41,6 @@ public class TimeUtil {
     /**
      * 毫秒的时间戳转LocalDateTime
      */
-    @Nullable
     public static LocalDateTime toLocalDateTime(long timestamp) {
         return toLocalDateTime(Instant.ofEpochMilli(timestamp));
     }
@@ -53,32 +48,27 @@ public class TimeUtil {
     /**
      * Instant转LocalDateTime
      */
-    @Nullable
     public static LocalDateTime toLocalDateTime(Instant instant) {
-        return instant != null ? LocalDateTime.ofInstant(instant, ZoneId.systemDefault()) : null;
+        return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
     }
 
     /**
      * LocalDateTime转Instant
      */
-    @Nullable
     public static Instant toInstant(LocalDateTime dateTime) {
-        return dateTime != null ? dateTime.atZone(ZoneId.systemDefault()).toInstant() : null;
+        return dateTime.atZone(ZoneId.systemDefault()).toInstant();
     }
 
     /**
      * LocalDateTime转Date
      */
-    @Nullable
     public static Date toDate(LocalDateTime dateTime) {
-        Instant instant = toInstant(dateTime);
-        return instant != null ? Date.from(instant) : null;
+        return Date.from(toInstant(dateTime));
     }
 
     /**
      * 将Date转换成yyyy-MM-dd HH:mm:ss格式的字符串
      */
-    @Nullable
     public static String toString(Date date) {
         return toString(toLocalDateTime(date));
     }
@@ -86,19 +76,14 @@ public class TimeUtil {
     /**
      * 将LocalDateTime转换成yyyy-MM-dd HH:mm:ss格式的字符串
      */
-    @Nullable
     public static String toString(LocalDateTime dateTime) {
-        return dateTime == null ? null : dateTime.format(FORMATTER);
+        return dateTime.format(FORMATTER);
     }
 
     /**
      * 将Duration格式化成 H:MM:SS 的字符串
      */
-    @Nullable
     public static String prettyPrint(Duration duration) {
-        if (duration == null) {
-            return null;
-        }
         long s = duration.toSeconds();
         return String.format("%d:%02d:%02d", s / 3600, (s % 3600) / 60, (s % 60));
     }
