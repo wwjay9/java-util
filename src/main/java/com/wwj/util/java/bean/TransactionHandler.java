@@ -1,4 +1,4 @@
-package com.tuhu.service.jv.handler;
+package com.wwj.util.java.bean;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;

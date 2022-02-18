@@ -17,6 +17,7 @@ module com.wwj.util.java {
     requires spring.beans;
     requires spring.context;
     requires spring.web;
+    requires spring.tx;
     requires spring.data.redis;
     requires spring.security.core;
     requires spring.security.crypto;
