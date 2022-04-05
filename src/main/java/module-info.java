@@ -24,8 +24,7 @@ module com.wwj.util.java {
     // fastjson
     requires fastjson;
     // poi
-    requires poi;
-    requires poi.ooxml;
+    requires org.apache.poi.ooxml;
     // 二维码
     requires com.google.zxing;
     requires com.google.zxing.javase;
