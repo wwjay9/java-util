@@ -4,10 +4,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -36,7 +33,7 @@ public class ZipUtil {
     public static void pack(final Path zipFile, final Path... filePaths) {
         createZip(zipFile);
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFile))) {
-            if (filePaths != null && filePaths.length > 0) {
+            if (filePaths != null) {
                 for (Path path : filePaths) {
                     if (!Files.exists(path)) {
                         throw new ZipException(path + "文件不存在");
@@ -111,7 +108,7 @@ public class ZipUtil {
     public static void append(final Path zipFile, final Path source, final Path target) {
         isValid(zipFile);
 
-        try (FileSystem fs = FileSystems.newFileSystem(zipFile, null)) {
+        try (FileSystem fs = FileSystems.newFileSystem(zipFile)) {
             if (!Files.exists(source)) {
                 throw new ZipException("源路径不存在");
             }
@@ -162,7 +159,7 @@ public class ZipUtil {
      * @return 读取的数据
      */
     public static byte[] readByte(final Path zipFile, final String filePath) {
-        try (FileSystem fs = FileSystems.newFileSystem(zipFile, null)) {
+        try (FileSystem fs = FileSystems.newFileSystem(zipFile)) {
             Path path = fs.getPath(filePath);
             return Files.readAllBytes(path);
         } catch (IOException e) {
@@ -277,7 +274,7 @@ public class ZipUtil {
      * 解压gzip格式数据
      */
     public static String gunzip(byte[] bytes) {
-        if (bytes.length <= 0) {
+        if (bytes.length == 0) {
             return null;
         }
         try (InputStream is = new GZIPInputStream(new ByteArrayInputStream(bytes));
@@ -305,6 +302,7 @@ public class ZipUtil {
 
     public static class ZipException extends RuntimeException {
 
+        @Serial
         private static final long serialVersionUID = 3939639697866528050L;
 
         public ZipException(String message) {

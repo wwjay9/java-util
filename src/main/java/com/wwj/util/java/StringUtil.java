@@ -189,7 +189,7 @@ public class StringUtil {
     private static <T> T stringConvert(String s, Function<String, T> converter) {
         return Optional.ofNullable(s)
                 .filter(StringUtils::hasText)
-                .map(StringUtils::trimWhitespace)
+                .map(String::strip)
                 .map(converter)
                 .orElse(null);
     }

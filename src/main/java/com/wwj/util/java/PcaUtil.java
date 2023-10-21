@@ -19,7 +19,7 @@ import java.util.stream.IntStream;
 
 /**
  * 省市区工具类，工具会读取resources/static/pca-code.json文件
- * 数据来源：https://github.com/modood/Administrative-divisions-of-China
+ * <a href="https://github.com/modood/Administrative-divisions-of-China">数据来源</a>
  *
  * @author wwj
  */

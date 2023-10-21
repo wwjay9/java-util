@@ -11,6 +11,7 @@ import java.util.function.Supplier;
  *
  * @author wwj
  */
+@SuppressWarnings("unused")
 @Service
 public class TransactionHandler {
 

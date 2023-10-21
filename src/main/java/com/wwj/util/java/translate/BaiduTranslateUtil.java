@@ -3,6 +3,7 @@ package com.wwj.util.java.translate;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.wwj.util.java.HttpUtil;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.DigestUtils;
@@ -72,6 +73,7 @@ public class BaiduTranslateUtil {
         return DigestUtils.md5DigestAsHex(s.getBytes());
     }
 
+    @Getter
     @SuppressWarnings("unused")
     public enum Lang {
         /**
@@ -196,9 +198,6 @@ public class BaiduTranslateUtil {
             this.isoCode = isoCode;
         }
 
-        public String getIsoCode() {
-            return isoCode;
-        }
     }
 
 }

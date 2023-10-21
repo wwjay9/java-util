@@ -11,7 +11,7 @@ import java.util.Optional;
 
 /**
  * Google翻译工具类
- * 支持的语言列表：https://translation.googleapis.com/language/translate/v2/languages/?target=zh&key=YOUR_API_KEY_HERE
+ * <a href="https://translation.googleapis.com/language/translate/v2/languages/?target=zh&key=YOUR_API_KEY_HERE">支持的语言列表</a>
  *
  * @author wwj
  */
@@ -20,6 +20,7 @@ import java.util.Optional;
 public class GoogleTranslateUtil {
 
     private static final String TRANSLATE_API = "https://translation.googleapis.com/language/translate/v2";
+
     private final String key;
 
     private GoogleTranslateUtil(String key) {

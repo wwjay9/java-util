@@ -30,4 +30,6 @@ module com.wwj.util.java {
     requires com.google.zxing.javase;
     // jsoup
     requires org.jsoup;
+    // servlet
+    requires jakarta.servlet;
 }

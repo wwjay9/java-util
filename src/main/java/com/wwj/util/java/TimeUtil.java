@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 public class TimeUtil {
 
     public static final String DATA_PATTERN = "yyyy-MM-dd HH:mm:ss";
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(DATA_PATTERN);
 
     private TimeUtil() {
@@ -110,7 +111,7 @@ public class TimeUtil {
      * @return 包含开始时间和结束时间的日期
      */
     public static List<LocalDate> between(LocalDate start, LocalDate end) {
-        Assert.isTrue(start.compareTo(end) <= 0, "开始时间必须在结束时间之前");
+        Assert.isTrue(start.isBefore(end), "开始时间必须在结束时间之前");
         return Stream.iterate(start, date -> date.plusDays(1))
                 .limit(ChronoUnit.DAYS.between(start, end) + 1)
                 .collect(Collectors.toList());

@@ -1,5 +1,6 @@
 package com.wwj.util.java;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +14,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -48,6 +49,7 @@ import java.util.zip.GZIPInputStream;
 public class HttpUtil {
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+
     private static final String APPLICATION_JSON_UTF8_VALUE = "application/json;charset=UTF-8";
 
     private HttpUtil() {
@@ -150,6 +152,7 @@ public class HttpUtil {
      */
     @Nullable
     public static HttpServletRequest getCurrentHttpServletRequest() {
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         return Optional.ofNullable(RequestContextHolder.getRequestAttributes())
                 .filter(ServletRequestAttributes.class::isInstance)
                 .map(ServletRequestAttributes.class::cast)
@@ -383,7 +386,7 @@ public class HttpUtil {
      * 解压gzip
      */
     public static String gunzip(byte[] bytes) {
-        if (bytes.length <= 0) {
+        if (bytes.length == 0) {
             return null;
         }
         try (InputStream is = new GZIPInputStream(new ByteArrayInputStream(bytes));
@@ -439,6 +442,7 @@ public class HttpUtil {
     public static class UsernamePasswordAuthenticationToken {
 
         private final String username;
+
         private final String password;
 
         public UsernamePasswordAuthenticationToken(String username, String password) {
@@ -455,6 +459,7 @@ public class HttpUtil {
          * 文件大小
          */
         private DataSize dataSize;
+
         /**
          * 文件类型
          */
