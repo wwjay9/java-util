@@ -6,8 +6,6 @@ module com.wwj.util.java {
     requires java.desktop;
     requires java.net.http;
     requires java.sql;
-    // servlet
-    requires servlet.api;
     // lombok
     requires static lombok;
     // slf4j
