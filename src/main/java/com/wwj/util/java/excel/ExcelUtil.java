@@ -1,10 +1,23 @@
 package com.wwj.util.java.excel;
 
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeUtil;
 import org.apache.poi.ss.util.CellUtil;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
+import org.apache.poi.xssf.usermodel.XSSFDrawing;
+import org.apache.poi.xssf.usermodel.XSSFPicture;
+import org.apache.poi.xssf.usermodel.XSSFPictureData;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.lang.Nullable;
@@ -20,7 +33,13 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -35,11 +54,17 @@ import java.util.stream.Stream;
 public class ExcelUtil {
 
     public static final int SEARCH_UP = 1;
+
     public static final int SEARCH_RIGHT = 2;
+
     public static final int SEARCH_DOWN = 3;
+
     public static final int SEARCH_LEFT = 4;
+
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
+
     private static final String DEFAULT_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(DEFAULT_FORMAT);
 
     private ExcelUtil() {
@@ -66,7 +91,7 @@ public class ExcelUtil {
         IntStream.range(0, columnProperty.size()).forEachOrdered(i -> {
             ColumnProperty property = columnProperty.get(i);
             Cell cell = headerRow.createCell(i);
-            cell.setCellValue(property.getHeaderName());
+            cell.setCellValue(property.headerName());
             Integer colWidth = property.getColWidth();
             if (colWidth != null) {
                 sheet.setColumnWidth(i, colWidth);
@@ -80,7 +105,7 @@ public class ExcelUtil {
             Row row = sheet.createRow(i + 1);
             IntStream.range(0, columnProperty.size()).forEachOrdered(j -> {
                 ColumnProperty cp = columnProperty.get(j);
-                Object value = beanWrapper.getPropertyValue(cp.getFieldName());
+                Object value = beanWrapper.getPropertyValue(cp.fieldName());
                 Cell cell = row.createCell(j);
                 setCellValue(cell, value);
             });
@@ -726,25 +751,10 @@ public class ExcelUtil {
                 .collect(Collectors.toList());
     }
 
-    private static class ColumnProperty {
+    private record ColumnProperty(String fieldName, String headerName, short colWidth) {
 
-        private final String fieldName;
-        private final String headerName;
-        private final short colWidth;
-
-        private ColumnProperty(String fieldName, String headerName, short colWidth) {
+        private ColumnProperty {
             Assert.isTrue(colWidth < 255, "列宽最大不能超过255个字符");
-            this.fieldName = fieldName;
-            this.headerName = headerName;
-            this.colWidth = colWidth;
-        }
-
-        private String getFieldName() {
-            return fieldName;
-        }
-
-        private String getHeaderName() {
-            return headerName;
         }
 
         private Integer getColWidth() {

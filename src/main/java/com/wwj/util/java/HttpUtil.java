@@ -33,7 +33,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.Base64;
+import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.StringTokenizer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -87,11 +91,7 @@ public class HttpUtil {
         if (queryParams != null) {
             queryParams.forEach(builder::queryParam);
         }
-        return builder.build()
-                .normalize()
-                .toUri()
-                .normalize()
-                .toString();
+        return builder.build().normalize().toUri().normalize().toString();
     }
 
     /**
@@ -134,8 +134,7 @@ public class HttpUtil {
         if (request == null) {
             return null;
         }
-        return Stream.of("X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP",
-                        "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR")
+        return Stream.of("X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP", "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR")
                 .map(request::getHeader)
                 .filter(StringUtils::hasText)
                 .map(String::trim)
@@ -168,9 +167,7 @@ public class HttpUtil {
      * @throws RestClientException 网络异常
      */
     public static String get(String url) {
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                .GET()
-                .build();
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
         return send(request);
     }
 
@@ -278,13 +275,11 @@ public class HttpUtil {
         HttpStatus responseHttpStatus = HttpStatus.valueOf(response.statusCode());
         // 3xx重定向
         if (responseHttpStatus.is3xxRedirection()) {
-            URI redirectionUri = response.headers()
-                    .firstValue(HttpHeaders.LOCATION)
-                    .map(URI::create)
-                    .orElse(null);
+            URI redirectionUri = response.headers().firstValue(HttpHeaders.LOCATION).map(URI::create).orElse(null);
             if (redirectionUri != null) {
-                String redirectionUrl = redirectionUri.isAbsolute() ? redirectionUri.toString() :
-                        request.uri().resolve(redirectionUri).toString();
+                String redirectionUrl = redirectionUri.isAbsolute() ? redirectionUri.toString() : request.uri()
+                        .resolve(redirectionUri)
+                        .toString();
                 return get(redirectionUrl);
             }
         }
@@ -297,8 +292,7 @@ public class HttpUtil {
         HttpHeaders httpHeaders = new HttpHeaders();
         response.headers().map().forEach(httpHeaders::addAll);
 
-        throw HttpClientErrorException.create(responseHttpStatus, responseHttpStatus.name(),
-                httpHeaders, body, StandardCharsets.UTF_8);
+        throw HttpClientErrorException.create(responseHttpStatus, responseHttpStatus.name(), httpHeaders, body, StandardCharsets.UTF_8);
     }
 
     /**
@@ -308,9 +302,7 @@ public class HttpUtil {
      * @param completedAction 请求执行完成后执行动作
      */
     public static void sendAsync(HttpRequest request, Consumer<String> completedAction) {
-        HTTP_CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(completedAction);
+        HTTP_CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(HttpResponse::body).thenAccept(completedAction);
     }
 
     /**
@@ -321,10 +313,7 @@ public class HttpUtil {
      */
     public static Path downloadFileToDirectories(String url, Path directoriesPath) {
         // 删除url中的查询参数
-        String newUrl = UriComponentsBuilder.fromHttpUrl(url)
-                .replaceQuery("")
-                .build()
-                .toString();
+        String newUrl = UriComponentsBuilder.fromHttpUrl(url).replaceQuery("").build().toString();
         String filename = URLDecoder.decode(StringUtils.getFilename(newUrl), StandardCharsets.UTF_8);
         Path filePath = increaseFilename(directoriesPath.resolve(filename), 0);
         downloadFile(url, filePath);
@@ -358,9 +347,7 @@ public class HttpUtil {
      * @return 文件信息
      */
     public static RemoteFileInfo getRemoteFileInfo(String url) {
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                .method("HEAD", HttpRequest.BodyPublishers.noBody())
-                .build();
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url)).method("HEAD", HttpRequest.BodyPublishers.noBody()).build();
         HttpResponse<Void> response = send(request, HttpResponse.BodyHandlers.discarding());
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.putAll(response.headers().map());
@@ -377,8 +364,7 @@ public class HttpUtil {
         if ((bytes == null) || (bytes.length < minLength)) {
             return false;
         } else {
-            return ((bytes[0] == (byte) (GZIPInputStream.GZIP_MAGIC))
-                    && (bytes[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8)));
+            return ((bytes[0] == (byte) (GZIPInputStream.GZIP_MAGIC)) && (bytes[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8)));
         }
     }
 
@@ -389,8 +375,8 @@ public class HttpUtil {
         if (bytes.length == 0) {
             return null;
         }
-        try (InputStream is = new GZIPInputStream(new ByteArrayInputStream(bytes));
-             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+        try (InputStream is = new GZIPInputStream(
+                new ByteArrayInputStream(bytes)); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             is.transferTo(os);
             return os.toString(StandardCharsets.UTF_8);
         } catch (IOException e) {
@@ -438,18 +424,7 @@ public class HttpUtil {
         }
     }
 
-    @Getter
-    public static class UsernamePasswordAuthenticationToken {
-
-        private final String username;
-
-        private final String password;
-
-        public UsernamePasswordAuthenticationToken(String username, String password) {
-            this.username = username;
-            this.password = password;
-        }
-    }
+    public record UsernamePasswordAuthenticationToken(String username, String password) {}
 
     @Getter
     @AllArgsConstructor

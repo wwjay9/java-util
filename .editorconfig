@@ -1,0 +1,86 @@
+root = true
+
+[*]
+# 字符集使用UTF-8
+charset = utf-8
+# 换行符使用LF
+end_of_line = lf
+# 缩进使用4个空格
+indent_size = 4
+# 缩进使用空格
+indent_style = space
+# 每行最大字符数量
+max_line_length = 140
+# 单个tab的大小
+tab_width = 4
+# 函数调用链中的换行缩进8个字符
+ij_continuation_indent_size = 8
+# 开启格式化标签的支持
+ij_formatter_tags_enabled = true
+# 格式化关闭标签
+ij_formatter_off_tag = @formatter:off
+# 格式化开启标签
+ij_formatter_on_tag = @formatter:on
+# 不允许空格与tab混合使用
+ij_smart_tabs = true
+
+[*.java]
+# 不使用import *
+ij_java_class_count_to_use_import_on_demand = 500
+ij_java_names_count_to_use_import_on_demand = 300
+# 取消注释的//在第一列
+ij_java_line_comment_at_first_column = false
+# 重新格式化时取消注释的//在第一列
+ij_java_keep_first_column_comment = false
+# 在注释的//后面添加一个空格
+ij_java_line_comment_add_space = true
+# 重新格式化时强制在//后面添加一个空格
+ij_java_line_comment_add_space_on_reformat = true
+# 重新格式化时不再保持原来的换行格式
+ij_java_keep_line_breaks = false
+# 重新格式化时控制语句换行
+ij_java_keep_control_statement_in_one_line = false
+# 不保留javadoc中空参数的标签
+ij_java_doc_keep_empty_parameter_tag = false
+# 不保留javadoc中空return的标签
+ij_java_doc_keep_empty_return_tag = false
+# 不保留javadoc中未使用的exception标签
+ij_java_doc_use_throws_not_exception_tag = true
+# 方法调用传参过长则换行
+ij_java_call_parameters_wrap = normal
+# 方法声明形参过长则换行
+ij_java_method_parameters_wrap = normal
+# 链式方法调用如果过长则截断
+ij_java_method_call_chain_wrap = on_every_item
+# 二元表达式如果过长则截断
+ij_java_binary_operation_wrap = on_every_item
+# if语句强制包含大括号
+ij_java_if_brace_force = always
+# while语句强制包含大括号
+ij_java_while_brace_force = always
+# do while语句强制包含大括号
+ij_java_do_while_brace_force = always
+# for语句强制包含大括号
+ij_java_for_brace_force = always
+# 枚举常量强制换行
+ij_java_enum_constants_wrap = split_into_lines
+# 在类名之后添加的空行数量
+ij_java_blank_lines_after_class_header = 1
+# 右大括号前最多空行数量
+ij_java_keep_blank_lines_before_right_brace = 0
+# 代码中最多连续空行数量
+ij_java_keep_blank_lines_in_code = 1
+# 字段声明周围最多空行数量
+ij_java_keep_blank_lines_in_declarations = 0
+
+[{*.ant,*.fxml,*.jhm,*.jnlp,*.jrxml,*.pom,*.rng,*.tld,*.wadl,*.wsdl,*.xml,*.xsd,*.xsl,*.xslt,*.xul}]
+# 在块注释中添加空格
+ij_xml_block_comment_add_space = true
+# 取消块注释在第一列
+ij_xml_block_comment_at_first_column = false
+# 取消行注释在第一列
+ij_xml_line_comment_at_first_column = false
+
+[{*.properties,spring.handlers,spring.schemas}]
+# 保留空行
+ij_properties_keep_blank_lines = true
