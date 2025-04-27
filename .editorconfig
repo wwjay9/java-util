@@ -66,6 +66,10 @@ ij_java_for_brace_force = always
 ij_java_enum_constants_wrap = split_into_lines
 # 在类名之后添加的空行数量
 ij_java_blank_lines_after_class_header = 1
+# 在字段周围添加的空行数量
+ij_java_blank_lines_around_field = 1
+# 在带注解的字段之前添加的空行数量
+ij_java_blank_lines_around_field_with_annotations = 1
 # 右大括号前最多空行数量
 ij_java_keep_blank_lines_before_right_brace = 0
 # 代码中最多连续空行数量
@@ -84,3 +88,7 @@ ij_xml_line_comment_at_first_column = false
 [{*.properties,spring.handlers,spring.schemas}]
 # 保留空行
 ij_properties_keep_blank_lines = true
+
+[{*.yaml,*.yml}]
+# 缩进空行数
+indent_size = 2
