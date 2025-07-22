@@ -235,31 +235,24 @@ public class ExcelUtil {
      */
     public static void mergedRegionReduce(Sheet sheet, int startRow, int mergedCol, List<Integer> sameCols,
                                           Map<Integer, BiConsumer<Cell, Cell>> accumulators) {
-        sheet.getMergedRegions().stream()
+        sheet.getMergedRegions()
+                .stream()
                 // 找出第mergedCol列的合并单元格
                 .filter(mr -> Objects.equals(mr.getFirstColumn(), mergedCol))
                 // 过滤出有多行的的合并单元格
                 .filter(mr -> mr.getFirstRow() < mr.getLastRow())
-                .forEach(mr -> IntStream.rangeClosed(mr.getFirstRow(), mr.getLastRow())
-                        .mapToObj(sheet::getRow)
-                        .filter(Objects::nonNull)
+                .forEach(mr -> IntStream.rangeClosed(mr.getFirstRow(), mr.getLastRow()).mapToObj(sheet::getRow).filter(Objects::nonNull)
                         // 将sameCols单元格值拼接后进行分组
                         .collect(Collectors.groupingBy(
-                                row -> sameCols.stream()
-                                        .map(row::getCell)
-                                        .map(ExcelUtil::getCellValue)
-                                        .filter(Objects::nonNull)
+                                row -> sameCols.stream().map(row::getCell).map(ExcelUtil::getCellValue).filter(Objects::nonNull)
                                         // 用"-"来拼接多个单元格的值，识别多个单元格的组合是否相同
-                                        .collect(Collectors.joining("-"))))
-                        .values()
-                        .stream()
+                                        .collect(Collectors.joining("-")))).values().stream()
                         // 取出符合合并条件的行
-                        .filter(list -> list.size() > 1)
-                        .forEach(rows -> {
+                        .filter(list -> list.size() > 1).forEach(rows -> {
                             Row firstRow = rows.remove(0);
                             rows.forEach(row -> {
-                                accumulators.forEach((accumulatorCol, accumulator) ->
-                                        accumulator.accept(CellUtil.getCell(firstRow, accumulatorCol),
+                                accumulators.forEach(
+                                        (accumulatorCol, accumulator) -> accumulator.accept(CellUtil.getCell(firstRow, accumulatorCol),
                                                 CellUtil.getCell(row, accumulatorCol)));
                                 // FIXME 执行完合并以后删除行，但是这里删除只是删除行的内容，生成后的表格需要手动删除
                                 sheet.removeRow(row);
@@ -306,8 +299,8 @@ public class ExcelUtil {
             Row sourceRow = CellUtil.getRow(i, sourceSheet);
             Row targetRow = CellUtil.getRow(targetRowIdx, targetSheet);
 
-            for (int j = sourceAddress.getFirstColumn(), targetColumn = targetOriginCell.getColumnIndex();
-                 j <= sourceAddress.getLastColumn(); j++, targetColumn++) {
+            for (int j = sourceAddress.getFirstColumn(), targetColumn = targetOriginCell.getColumnIndex(); j <=
+                    sourceAddress.getLastColumn(); j++, targetColumn++) {
                 Cell sourceCell = CellUtil.getCell(sourceRow, j);
                 Cell targetCell = CellUtil.getCell(targetRow, targetColumn);
                 // 复制单元格值
@@ -324,8 +317,7 @@ public class ExcelUtil {
         // 计算偏移量
         int offsetX = targetOriginCell.getColumnIndex() - sourceAddress.getFirstColumn();
         int offsetY = targetOriginCell.getRowIndex() - sourceAddress.getFirstRow();
-        sourceSheet.getMergedRegions()
-                .stream()
+        sourceSheet.getMergedRegions().stream()
                 // 查找要复制区域中包含的合并单元格
                 .filter(address -> CellRangeUtil.contains(sourceAddress, address))
                 // 设置偏移量
@@ -375,11 +367,10 @@ public class ExcelUtil {
         IntStream.rangeClosed(startRow, endRow)
                 .mapToObj(sheet::getRow)
                 .filter(Objects::nonNull)
-                .forEachOrdered(row ->
-                        IntStream.rangeClosed(0, row.getLastCellNum())
-                                .mapToObj(row::getCell)
-                                .filter(Objects::nonNull)
-                                .forEachOrdered(Cell::setBlank));
+                .forEachOrdered(row -> IntStream.rangeClosed(0, row.getLastCellNum())
+                        .mapToObj(row::getCell)
+                        .filter(Objects::nonNull)
+                        .forEachOrdered(Cell::setBlank));
     }
 
     /**
@@ -396,11 +387,10 @@ public class ExcelUtil {
         IntStream.rangeClosed(firstRow, lastRow)
                 .mapToObj(sheet::getRow)
                 .filter(Objects::nonNull)
-                .forEachOrdered(row ->
-                        IntStream.rangeClosed(firstCol, lastCol)
-                                .mapToObj(row::getCell)
-                                .filter(Objects::nonNull)
-                                .forEachOrdered(Cell::setBlank));
+                .forEachOrdered(row -> IntStream.rangeClosed(firstCol, lastCol)
+                        .mapToObj(row::getCell)
+                        .filter(Objects::nonNull)
+                        .forEachOrdered(Cell::setBlank));
     }
 
     /**
@@ -430,26 +420,24 @@ public class ExcelUtil {
         if (rowIndex >= 0 && rowIndex < lastRow) {
             List<CellRangeAddress> updateMergedRegions = new ArrayList<>();
             // 找出需要调整的合并单元格
-            IntStream.range(0, sheet.getNumMergedRegions())
-                    .forEach(i -> {
-                        CellRangeAddress mr = sheet.getMergedRegion(i);
-                        if (!mr.containsRow(rowIndex)) {
-                            return;
-                        }
-                        // 缩减以后变成单个单元格则删除合并单元格
-                        if (mr.getFirstRow() == mr.getLastRow() - 1 && mr.getFirstColumn() == mr.getLastColumn()) {
-                            return;
-                        }
-                        updateMergedRegions.add(mr);
-                    });
+            IntStream.range(0, sheet.getNumMergedRegions()).forEach(i -> {
+                CellRangeAddress mr = sheet.getMergedRegion(i);
+                if (!mr.containsRow(rowIndex)) {
+                    return;
+                }
+                // 缩减以后变成单个单元格则删除合并单元格
+                if (mr.getFirstRow() == mr.getLastRow() - 1 && mr.getFirstColumn() == mr.getLastColumn()) {
+                    return;
+                }
+                updateMergedRegions.add(mr);
+            });
 
             // 将行上移
             sheet.shiftRows(rowIndex + 1, lastRow, -1);
 
             // 找出删除行所在的合并单元格
             List<Integer> removeMergedRegions = IntStream.range(0, sheet.getNumMergedRegions())
-                    .filter(i -> updateMergedRegions.stream().
-                            anyMatch(umr -> CellRangeUtil.contains(umr, sheet.getMergedRegion(i))))
+                    .filter(i -> updateMergedRegions.stream().anyMatch(umr -> CellRangeUtil.contains(umr, sheet.getMergedRegion(i))))
                     .boxed()
                     .collect(Collectors.toList());
 
@@ -490,11 +478,7 @@ public class ExcelUtil {
     @Nullable
     public static CellRangeAddress getMergedCell(Sheet sheet, int row, int col) {
         Assert.isTrue(sheet != null && row >= 0 && col >= 0, "参数错误");
-        return sheet.getMergedRegions()
-                .stream()
-                .filter(range -> range.isInRange(row, col))
-                .findFirst()
-                .orElse(null);
+        return sheet.getMergedRegions().stream().filter(range -> range.isInRange(row, col)).findFirst().orElse(null);
     }
 
     /**
@@ -557,7 +541,8 @@ public class ExcelUtil {
         Cell cell = sheet.getRow(row).getCell(col);
         // WPS的合并单元格只有左上角的单元格有值
         if (cell == null) {
-            return Optional.ofNullable(craList).stream()
+            return Optional.ofNullable(craList)
+                    .stream()
                     .flatMap(List::stream)
                     .filter(cra -> cra.isInRange(row, col))
                     .findFirst()
@@ -590,26 +575,21 @@ public class ExcelUtil {
         if (drawing == null) {
             return new ArrayList<>();
         }
-        return drawing.getShapes().stream()
-                .filter(XSSFPicture.class::isInstance)
-                .map(XSSFPicture.class::cast)
-                .filter(picture -> {
-                    XSSFClientAnchor anchor = (XSSFClientAnchor) picture.getAnchor();
-                    // 以左上角单元格为基准
-                    return anchor.getRow1() == row && anchor.getCol1() == col;
-                })
-                .map(picture -> {
-                    XSSFPictureData pictureData = picture.getPictureData();
-                    Path path;
-                    try {
-                        path = Files.createTempFile("excel_img", "." + pictureData.suggestFileExtension());
-                        Files.write(path, pictureData.getData());
-                    } catch (IOException e) {
-                        throw new ExcelException("保存图片到临时文件失败", e);
-                    }
-                    return path;
-                })
-                .collect(Collectors.toList());
+        return drawing.getShapes().stream().filter(XSSFPicture.class::isInstance).map(XSSFPicture.class::cast).filter(picture -> {
+            XSSFClientAnchor anchor = (XSSFClientAnchor) picture.getAnchor();
+            // 以左上角单元格为基准
+            return anchor.getRow1() == row && anchor.getCol1() == col;
+        }).map(picture -> {
+            XSSFPictureData pictureData = picture.getPictureData();
+            Path path;
+            try {
+                path = Files.createTempFile("excel_img", "." + pictureData.suggestFileExtension());
+                Files.write(path, pictureData.getData());
+            } catch (IOException e) {
+                throw new ExcelException("保存图片到临时文件失败", e);
+            }
+            return path;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -741,14 +721,11 @@ public class ExcelUtil {
      * 获取申明了ExcelProperty注解字段的值
      */
     private static <T> List<ColumnProperty> getExcelProperty(Class<T> clazz) {
-        return Stream.of(clazz.getDeclaredFields())
-                .filter(field -> field.isAnnotationPresent(ExcelProperty.class))
-                .map(field -> {
-                    String name = field.getName();
-                    ExcelProperty property = field.getAnnotation(ExcelProperty.class);
-                    return new ColumnProperty(name, property.value(), property.width());
-                })
-                .collect(Collectors.toList());
+        return Stream.of(clazz.getDeclaredFields()).filter(field -> field.isAnnotationPresent(ExcelProperty.class)).map(field -> {
+            String name = field.getName();
+            ExcelProperty property = field.getAnnotation(ExcelProperty.class);
+            return new ColumnProperty(name, property.value(), property.width());
+        }).collect(Collectors.toList());
     }
 
     private record ColumnProperty(String fieldName, String headerName, short colWidth) {
@@ -775,5 +752,4 @@ public class ExcelUtil {
             super(message, cause);
         }
     }
-
 }

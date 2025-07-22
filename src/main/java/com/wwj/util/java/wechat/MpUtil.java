@@ -1,7 +1,7 @@
 package com.wwj.util.java.wechat;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.wwj.util.java.HttpUtil;
 import com.wwj.util.java.StringUtil;
 import com.wwj.util.java.bean.ApplicationContextProvider;
@@ -19,7 +19,11 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.SortedMap;
+import java.util.StringJoiner;
+import java.util.TreeMap;
 import java.util.function.Supplier;
 
 /**
@@ -35,14 +39,17 @@ public class MpUtil {
      * 获取公众号AccessToken的Api
      */
     private static final String ACCESS_TOKEN_API = "https://api.weixin.qq.com/cgi-bin/token";
+
     /**
      * 获取JS-SDK ticket的Api
      */
     private static final String JS_TICKET_API = "https://api.weixin.qq.com/cgi-bin/ticket/getticket";
+
     /**
      * AccessTokenRedis的key
      */
     private static final String ACCESS_TOKEN_REDIS_KEY = "wechat:access_token:%s";
+
     /**
      * AccessTokenRedis的key
      */
@@ -59,8 +66,7 @@ public class MpUtil {
      * @return accessToken
      */
     public static WeChatAccessToken getAccessToken(String appId, String appSecret) {
-        return getFromRedis(getAccessTokenRedisKey(appId), WeChatAccessToken.class,
-                () -> requestAccessTokenApi(appId, appSecret));
+        return getFromRedis(getAccessTokenRedisKey(appId), WeChatAccessToken.class, () -> requestAccessTokenApi(appId, appSecret));
     }
 
     /**
@@ -70,8 +76,7 @@ public class MpUtil {
      * @return accessToken
      */
     public static WeChatJsApiTicket getJsApiTicket(String accessToken) {
-        return getFromRedis(getJsapiTicketRedisKey(accessToken), WeChatJsApiTicket.class,
-                () -> requestJsTicketApi(accessToken));
+        return getFromRedis(getJsapiTicketRedisKey(accessToken), WeChatJsApiTicket.class, () -> requestJsTicketApi(accessToken));
     }
 
     /**
@@ -99,10 +104,7 @@ public class MpUtil {
     }
 
     private static WeChatAccessToken requestAccessTokenApi(String appId, String appSecret) {
-        Map<String, String> params = Map.of(
-                "grant_type", "client_credential",
-                "appid", appId,
-                "secret", appSecret);
+        Map<String, String> params = Map.of("grant_type", "client_credential", "appid", appId, "secret", appSecret);
         JSONObject json = requestApi(ACCESS_TOKEN_API, params);
         WeChatAccessToken accessToken = new WeChatAccessToken();
         accessToken.setAccessToken(json.getString("access_token"));
@@ -113,9 +115,7 @@ public class MpUtil {
     }
 
     private static WeChatJsApiTicket requestJsTicketApi(String accessToken) {
-        Map<String, String> params = Map.of(
-                "access_token", accessToken,
-                "type", "jsapi");
+        Map<String, String> params = Map.of("access_token", accessToken, "type", "jsapi");
         JSONObject json = requestApi(JS_TICKET_API, params);
         WeChatJsApiTicket ticket = new WeChatJsApiTicket();
         ticket.setTicket(json.getString("ticket"));
@@ -186,10 +186,12 @@ public class MpUtil {
          * 有效期，单位为秒
          */
         private Integer expiresIn;
+
         /**
          * 到期时间
          */
         private LocalDateTime expireTime;
+
         /**
          * 是否已过期
          */
@@ -231,18 +233,22 @@ public class MpUtil {
          * 是否开启调试模式
          */
         private boolean debug = false;
+
         /**
          * appId
          */
         private String appId;
+
         /**
          * 生成签名的时间戳
          */
         private Long timestamp;
+
         /**
          * 生成签名的随机串
          */
         private String nonceStr;
+
         /**
          * 签名
          */

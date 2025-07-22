@@ -37,10 +37,12 @@ public class QrCodeUtil {
      * 生成二维码的默认格式
      */
     private static final String DEFAULT_FORMAT = "png";
+
     /**
      * 二维码默认的内边距
      */
     private static final int DEFAULT_MARGIN = 0;
+
     /**
      * 二维码默认的容错等级
      */

@@ -1,8 +1,8 @@
 package com.wwj.util.java.wechat;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.wwj.util.java.HttpUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +21,7 @@ import java.util.stream.IntStream;
 public class WeChatUtil {
 
     private static final String ACCESS_TOKEN_API = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=%s&secret=%s&code=%s&grant_type=authorization_code";
+
     private static final String USER_INFO_API = "https://api.weixin.qq.com/sns/userinfo?access_token=%s&openid=%s";
 
     private WeChatUtil() {
@@ -76,9 +77,7 @@ public class WeChatUtil {
         userInfo.setHeadImgUrl(json.getString("headimgurl"));
         JSONArray privilege = json.getJSONArray("privilege");
         if (privilege != null && !privilege.isEmpty()) {
-            userInfo.setPrivilege(IntStream.range(0, privilege.size())
-                    .mapToObj(privilege::getString)
-                    .collect(Collectors.toList()));
+            userInfo.setPrivilege(IntStream.range(0, privilege.size()).mapToObj(privilege::getString).collect(Collectors.toList()));
         }
         userInfo.setUnionId(json.getString("unionid"));
         return userInfo;
@@ -88,10 +87,15 @@ public class WeChatUtil {
     public static class WeChatAccessToken {
 
         private String accessToken;
+
         private Integer expiresIn;
+
         private String refreshToken;
+
         private String openId;
+
         private String scope;
+
         private String unionId;
     }
 
@@ -99,14 +103,21 @@ public class WeChatUtil {
     public static class WeChatUserInfo {
 
         private String openId;
+
         private String nickname;
+
         private Integer sex;
+
         private String province;
+
         private String city;
+
         private String country;
+
         private String headImgUrl;
+
         private List<String> privilege;
+
         private String unionId;
     }
-
 }

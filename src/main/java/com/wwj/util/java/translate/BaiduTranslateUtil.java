@@ -1,7 +1,7 @@
 package com.wwj.util.java.translate;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.wwj.util.java.HttpUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,9 @@ import java.util.UUID;
 public class BaiduTranslateUtil {
 
     private static final String TRANSLATE_API = "https://fanyi-api.baidu.com/api/trans/vip/translate";
+
     private final String appId;
+
     private final String key;
 
     private BaiduTranslateUtil(String appId, String key) {
@@ -46,11 +48,7 @@ public class BaiduTranslateUtil {
     public String translate(String q, Lang from, Lang to) {
         Assert.isTrue(to != Lang.AUTO, "译文语言不能为auto");
         String salt = UUID.randomUUID().toString();
-        Map<String, String> requestParams = Map.of("q", q,
-                "from", from.getIsoCode(),
-                "to", to.getIsoCode(),
-                "appid", appId,
-                "salt", salt,
+        Map<String, String> requestParams = Map.of("q", q, "from", from.getIsoCode(), "to", to.getIsoCode(), "appid", appId, "salt", salt,
                 "sign", sign(q, salt));
         String responseBody = HttpUtil.post(TRANSLATE_API, requestParams);
         JSONObject response = JSON.parseObject(responseBody);
@@ -192,12 +190,11 @@ public class BaiduTranslateUtil {
          * 越南语
          */
         VIE("vie");
+
         private final String isoCode;
 
         Lang(String isoCode) {
             this.isoCode = isoCode;
         }
-
     }
-
 }

@@ -8,7 +8,12 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.beans.FeatureDescriptor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -62,13 +67,10 @@ public class BeanUtil {
      */
     public static void copyNotEmptyProperties(Object source, Object target) {
         BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(source);
-        String[] emptyFields = Stream.of(beanWrapper.getPropertyDescriptors())
-                .filter(property -> {
-                    Object value = beanWrapper.getPropertyValue(property.getName());
-                    return value == null || !StringUtils.hasText(value.toString());
-                })
-                .map(FeatureDescriptor::getName)
-                .toArray(String[]::new);
+        String[] emptyFields = Stream.of(beanWrapper.getPropertyDescriptors()).filter(property -> {
+            Object value = beanWrapper.getPropertyValue(property.getName());
+            return value == null || !StringUtils.hasText(value.toString());
+        }).map(FeatureDescriptor::getName).toArray(String[]::new);
         BeanUtils.copyProperties(source, target, emptyFields);
     }
 
@@ -112,9 +114,8 @@ public class BeanUtil {
      * @return 去重后的列表
      */
     public static <T> List<T> listDistinctByKey(List<T> list, Function<? super T, ?> keyExtractor) {
-        return new ArrayList<>(list.stream()
-                .collect(Collectors.toMap(keyExtractor, Function.identity(), (o1, o2) -> o1, LinkedHashMap::new))
-                .values());
+        return new ArrayList<>(
+                list.stream().collect(Collectors.toMap(keyExtractor, Function.identity(), (o1, o2) -> o1, LinkedHashMap::new)).values());
     }
 
     /**
@@ -168,8 +169,7 @@ public class BeanUtil {
      * @return LinkedHashMap
      */
     public static <C, K, V> Map<K, V> listToMap(Collection<C> collection, Function<C, K> getKey, Function<C, V> getValue) {
-        return collection.stream()
-                .collect(Collectors.toMap(getKey, getValue, (o1, o2) -> o2, LinkedHashMap::new));
+        return collection.stream().collect(Collectors.toMap(getKey, getValue, (o1, o2) -> o2, LinkedHashMap::new));
     }
 
     /**
@@ -180,8 +180,7 @@ public class BeanUtil {
      * @return 转换后的Map
      */
     public static <K, V, U> Map<K, U> mapConvertValueType(Map<K, V> map, Function<V, U> valueConvert) {
-        return map.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> valueConvert.apply(e.getValue())));
+        return map.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> valueConvert.apply(e.getValue())));
     }
 
     /**

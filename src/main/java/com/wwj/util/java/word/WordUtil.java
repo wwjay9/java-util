@@ -43,8 +43,7 @@ public class WordUtil {
      */
     private static void replace(XWPFDocument doc, String oldText, String newText) {
         for (XWPFParagraph paragraph : doc.getParagraphs()) {
-            getPlaceholderRange(paragraph, oldText)
-                    .forEach(range -> replaceText(paragraph, range[0], range[1], newText));
+            getPlaceholderRange(paragraph, oldText).forEach(range -> replaceText(paragraph, range[0], range[1], newText));
         }
     }
 
@@ -76,10 +75,7 @@ public class WordUtil {
                 start = i;
             }
             if (start != null && placeholder.endsWith(text)) {
-                String join = runs.subList(start, i + 1).stream()
-                        .map(XWPFRun::text)
-                        .collect(Collectors.joining())
-                        .trim();
+                String join = runs.subList(start, i + 1).stream().map(XWPFRun::text).collect(Collectors.joining()).trim();
                 if (Objects.equals(join, placeholder)) {
                     list.add(new int[]{start, i});
                 }

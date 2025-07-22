@@ -34,7 +34,12 @@ import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.SortedMap;
+import java.util.StringJoiner;
+import java.util.TreeMap;
 
 /**
  * 微信支付工具类
@@ -45,49 +50,84 @@ import java.util.*;
 public class WeChatPayUtil {
 
     public static final String APP_ID = "appid";
+
     public static final String MCH_ID = "mch_id";
+
     public static final String DEVICE_INFO = "device_info";
+
     public static final String NONCE_STR = "nonce_str";
+
     public static final String SIGN = "sign";
+
     public static final String SIGN_TYPE = "sign_type";
+
     public static final String BODY = "body";
+
     public static final String DETAIL = "detail";
+
     public static final String ATTACH = "attach";
+
     public static final String OUT_TRADE_NO = "out_trade_no";
+
     public static final String FEE_TYPE = "fee_type";
+
     public static final String TOTAL_FEE = "total_fee";
+
     public static final String SP_BILL_CREATE_IP = "spbill_create_ip";
+
     public static final String TIME_START = "time_start";
+
     public static final String TIME_EXPIRE = "time_expire";
+
     public static final String GOODS_TAG = "goods_tag";
+
     public static final String NOTIFY_URL = "notify_url";
+
     public static final String TRADE_TYPE = "trade_type";
+
     public static final String PRODUCT_ID = "product_id";
+
     public static final String LIMIT_PAY = "limit_pay";
+
     public static final String OPEN_ID = "openid";
+
     public static final String SCENE_INFO = "scene_info";
+
     public static final String TRANSACTION_ID = "transaction_id";
+
     public static final String RETURN_CODE = "return_code";
+
     public static final String RETURN_MSG = "return_msg";
+
     public static final String RESULT_CODE = "result_code";
+
     public static final String ERR_CODE = "err_code";
+
     public static final String ERR_CODE_DES = "err_code_des";
+
     public static final String PREPAY_ID = "prepay_id";
+
     public static final String CODE_URL = "code_url";
+
     public static final String SUCCESS = "SUCCESS";
+
     /**
      * 微信的统一下单接口地址
      */
     private static final String UNIFIED_ORDER_URL = "https://api.mch.weixin.qq.com/pay/unifiedorder";
+
     private static final RestTemplate REST_TEMPLATE = new RestTemplate();
+
     /**
      * 默认的支付方式，禁止使用信用卡
      */
     private static final String DEFAULT_LIMIT_PAY = "no_credit";
+
     /**
      * 默认的签名类型
      */
     private static final String DEFAULT_SIGN_TYPE = "HMAC-SHA256";
+
     /**
      * 微信支付回调返回成功的xml
      */
@@ -115,10 +155,10 @@ public class WeChatPayUtil {
      * @param openId         用户标识
      * @return 返回前端JS调用微信支付的请求参数列表
      */
-    public static Map<String, String> jsApiPay(String appId, String mchId, String key, String body, String outTradeNo,
-                                               int totalFee, String spBillCreateIp, String notifyUrl, String openId) {
-        String bodyXml = generateUnifiedOrderXml(appId, mchId, key, body, outTradeNo,
-                totalFee, spBillCreateIp, notifyUrl, TradeType.JSAPI, null, openId);
+    public static Map<String, String> jsApiPay(String appId, String mchId, String key, String body, String outTradeNo, int totalFee,
+                                               String spBillCreateIp, String notifyUrl, String openId) {
+        String bodyXml = generateUnifiedOrderXml(appId, mchId, key, body, outTradeNo, totalFee, spBillCreateIp, notifyUrl, TradeType.JSAPI,
+                null, openId);
         Map<String, String> responseMap = unifiedOrderRequest(bodyXml, key);
         String prepayId = responseMap.get(PREPAY_ID);
 
@@ -146,10 +186,10 @@ public class WeChatPayUtil {
      * @param productId      商品ID
      * @return 返回二维码链接
      */
-    public static String nativePay(String appId, String mchId, String key, String body, String outTradeNo,
-                                   int totalFee, String spBillCreateIp, String notifyUrl, String productId) {
-        String bodyXml = generateUnifiedOrderXml(appId, mchId, key, body, outTradeNo,
-                totalFee, spBillCreateIp, notifyUrl, TradeType.NATIVE, productId, null);
+    public static String nativePay(String appId, String mchId, String key, String body, String outTradeNo, int totalFee,
+                                   String spBillCreateIp, String notifyUrl, String productId) {
+        String bodyXml = generateUnifiedOrderXml(appId, mchId, key, body, outTradeNo, totalFee, spBillCreateIp, notifyUrl, TradeType.NATIVE,
+                productId, null);
         Map<String, String> responseMap = unifiedOrderRequest(bodyXml, key);
         return responseMap.get(CODE_URL);
     }
@@ -165,8 +205,7 @@ public class WeChatPayUtil {
             rootElement.normalize();
 
             Map<String, String> data = new LinkedHashMap<>();
-            DomUtils.getChildElements(rootElement)
-                    .forEach(element -> data.put(element.getTagName(), DomUtils.getTextValue(element)));
+            DomUtils.getChildElements(rootElement).forEach(element -> data.put(element.getTagName(), DomUtils.getTextValue(element)));
             return data;
         } catch (IOException | SAXException e) {
             throw new IllegalArgumentException("解析xml异常", e);
@@ -211,9 +250,9 @@ public class WeChatPayUtil {
      * @param openId         用户标识，trade_type=JSAPI时（即JSAPI支付），此参数必传
      * @return 订单请求的xml
      */
-    private static String generateUnifiedOrderXml(String appId, String mchId, String key, String body, String outTradeNo,
-                                                  int totalFee, String spBillCreateIp, String notifyUrl,
-                                                  TradeType tradeType, String productId, String openId) {
+    private static String generateUnifiedOrderXml(String appId, String mchId, String key, String body, String outTradeNo, int totalFee,
+                                                  String spBillCreateIp, String notifyUrl, TradeType tradeType, String productId,
+                                                  String openId) {
         Assert.hasText(appId, "appId不能为空值");
         Assert.hasText(mchId, "mchId不能为空值");
         Assert.hasText(key, "key不能为空值");
@@ -259,7 +298,8 @@ public class WeChatPayUtil {
     private static Map<String, String> unifiedOrderRequest(String requestBody, String key) {
         String responseXml = REST_TEMPLATE.postForObject(UNIFIED_ORDER_URL, requestBody, String.class);
         Map<String, String> responseMap = xmlToMap(responseXml);
-        if (!(responseMap.containsKey(RETURN_CODE) && responseMap.containsKey(RESULT_CODE) &&
+        if (!(responseMap.containsKey(RETURN_CODE) &&
+                responseMap.containsKey(RESULT_CODE) &&
                 Objects.equals(responseMap.get(RETURN_CODE).toUpperCase(), SUCCESS) &&
                 Objects.equals(responseMap.get(RESULT_CODE).toUpperCase(), SUCCESS))) {
             throw new IllegalArgumentException("请求微信支付下单接口失败,返回的错误信息:" + responseXml);

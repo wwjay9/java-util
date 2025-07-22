@@ -20,7 +20,7 @@ module com.wwj.util.java {
     requires spring.security.core;
     requires spring.security.crypto;
     // fastjson
-    requires fastjson;
+    requires com.alibaba.fastjson2;
     // poi
     requires org.apache.poi.ooxml;
     // 二维码

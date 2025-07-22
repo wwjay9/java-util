@@ -1,8 +1,8 @@
 package com.wwj.util.java;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -27,13 +27,12 @@ import java.util.stream.IntStream;
 public class PcaUtil {
 
     private static final Map<String, String> CODE_NAME_MAP = new HashMap<>();
+
     private static final String MUNICIPALITY = "市辖区";
 
     static {
         try (InputStream inputStream = new ClassPathResource("static/pca-code.json").getInputStream()) {
-            String json = new BufferedReader(new InputStreamReader(inputStream))
-                    .lines()
-                    .collect(Collectors.joining("\n"));
+            String json = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
             JSONArray provinceJson = JSON.parseArray(json);
             jsonMap(provinceJson);
         } catch (IOException e) {
@@ -69,8 +68,7 @@ public class PcaUtil {
      * @return 完整地区名称
      */
     public static String checkCode(String province, String city, String district) {
-        Assert.isTrue(StringUtils.hasText(province) && StringUtils.hasText(city) &&
-                StringUtils.hasText(district), "地区代码不能为空");
+        Assert.isTrue(StringUtils.hasText(province) && StringUtils.hasText(city) && StringUtils.hasText(district), "地区代码不能为空");
         Assert.isTrue(city.startsWith(province) && district.startsWith(city), "地区代码格式不正确");
         return checkCode(province) + checkCode(city) + checkCode(district);
     }

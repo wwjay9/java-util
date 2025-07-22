@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class ThreadUtil {
 
     private static final int POOL_SIZE = Runtime.getRuntime().availableProcessors() * 2;
+
     private static final ForkJoinPool FORK_JOIN_POOL = new ForkJoinPool(POOL_SIZE);
 
     static {
@@ -134,7 +135,8 @@ public class ThreadUtil {
         if (distinctList.size() <= size) {
             return convertor.apply(distinctList);
         }
-        return BeanUtil.listPartition(distinctList, size).parallelStream()
+        return BeanUtil.listPartition(distinctList, size)
+                .parallelStream()
                 .map(convertor)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());

@@ -4,14 +4,29 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.*;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * zip工具
@@ -80,19 +95,18 @@ public class ZipUtil {
 
         createZip(zipFile);
 
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFile));
-             Stream<Path> sourcePaths = Files.walk(sourceDirPath)) {
-            sourcePaths.filter(Files::isRegularFile)
-                    .forEach(path -> {
-                        ZipEntry zipEntry = new ZipEntry(sourceDirPath.relativize(path).toString());
-                        try {
-                            zipOutputStream.putNextEntry(zipEntry);
-                            Files.copy(path, zipOutputStream);
-                            zipOutputStream.closeEntry();
-                        } catch (IOException e) {
-                            throw new ZipException("打包zip文件失败:", e);
-                        }
-                    });
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFile)); Stream<Path> sourcePaths = Files.walk(
+                sourceDirPath)) {
+            sourcePaths.filter(Files::isRegularFile).forEach(path -> {
+                ZipEntry zipEntry = new ZipEntry(sourceDirPath.relativize(path).toString());
+                try {
+                    zipOutputStream.putNextEntry(zipEntry);
+                    Files.copy(path, zipOutputStream);
+                    zipOutputStream.closeEntry();
+                } catch (IOException e) {
+                    throw new ZipException("打包zip文件失败:", e);
+                }
+            });
         } catch (IOException e) {
             throw new ZipException("打包zip文件失败:", e);
         }
@@ -202,10 +216,7 @@ public class ZipUtil {
      */
     public static void unzip(final Path zipPath, final Path target, String... extension) {
         isValid(zipPath);
-        Set<String> extensionSet = Set.of(extension)
-                .stream()
-                .map(String::toLowerCase)
-                .collect(Collectors.toSet());
+        Set<String> extensionSet = Set.of(extension).stream().map(String::toLowerCase).collect(Collectors.toSet());
 
         try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
             zipFile.stream()
@@ -221,8 +232,7 @@ public class ZipUtil {
                         Path zipElementPath = Paths.get(target.toString(), zipEntry.getName());
                         Assert.isTrue(zipElementPath.normalize().startsWith(target.normalize()),
                                 "解压的文件在目标文件夹之外: " + zipEntry.getName());
-                    })
-                    .forEach(zipEntry -> {
+                    }).forEach(zipEntry -> {
                         Path zipElementPath = Paths.get(target.toString(), zipEntry.getName());
                         try {
                             if (zipEntry.isDirectory()) {
@@ -277,8 +287,8 @@ public class ZipUtil {
         if (bytes.length == 0) {
             return null;
         }
-        try (InputStream is = new GZIPInputStream(new ByteArrayInputStream(bytes));
-             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+        try (InputStream is = new GZIPInputStream(
+                new ByteArrayInputStream(bytes)); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             is.transferTo(os);
             return os.toString(StandardCharsets.UTF_8);
         } catch (IOException e) {
